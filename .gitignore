@@ -1,0 +1,27 @@
+# Environment variables & secrets
+.env
+*.env
+.env.example
+service_account*.json
+
+# Workspace configuration
+.agents/
+
+# Database & SQLite files
+*.db
+*.sqlite
+instance/
+
+# Python cache & virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+.venv/
+
+# Scratch & test scripts
+create_dummy_json.py
+test_registration.py
