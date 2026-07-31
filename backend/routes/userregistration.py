@@ -13,11 +13,25 @@ def RegisterUser():
     if not data:
         return jsonify({"report": "No data provided"}), 400
 
-    # Ensure all required keys are present (using lowercase as per rules)
-    required_keys = ['fullname', 'emailaddress', 'rollnumber', 'mobilenumber', 'department', 'section', 'year']
+    # Ensure all required keys are present
+    required_keys = [
+        'fullname', 'emailaddress', 'rollnumber', 'mobilenumber', 
+        'department', 'section', 'year', 'portfolio', 
+        'knowaboutaarna', 'whyjoinaarna', 'skills', 'leadershiprating'
+    ]
     for key in required_keys:
         if key not in data:
             return jsonify({"report": f"Missing required field: {key}"}), 400
+
+    # Handle Leadership Rating integer validation
+    try:
+        leadership_rating = int(data['leadershiprating'])
+    except ValueError:
+        return jsonify({"report": "Leadership rating must be a valid number"}), 400
+
+    # Handle optional fields safely
+    previous_club = data.get('previousclub', '')
+    current_club = data.get('currentclub', '')
 
     # Save to Database
     try:
@@ -28,7 +42,14 @@ def RegisterUser():
             mobilenumber=data['mobilenumber'],
             department=data['department'],
             section=data['section'],
-            year=data['year']
+            year=data['year'],
+            portfolio=data['portfolio'],
+            knowaboutaarna=data['knowaboutaarna'],
+            whyjoinaarna=data['whyjoinaarna'],
+            skills=data['skills'],
+            previousclub=previous_club,
+            currentclub=current_club,
+            leadershiprating=leadership_rating
         )
         new_registration.SaveRegistration()
     except Exception as e:
@@ -42,17 +63,19 @@ def RegisterUser():
         data['mobilenumber'],
         data['department'],
         data['section'],
-        data['year']
+        data['year'],
+        data['portfolio'],
+        data['knowaboutaarna'],
+        data['whyjoinaarna'],
+        data['skills'],
+        previous_club,
+        current_club,
+        leadership_rating
     ]
     
-    # We will attempt to append to sheets, but we won't fail the registration if it fails (optional fallback, but let's just log it)
-    # The requirement is to upload the data to google sheets.
     sheets_success = sheets_manager.AppendRow(row_data)
     
     if not sheets_success:
-        # If sheets upload fails but DB succeeds, you can still return success or a specific message.
-        # Let's return success but note the sheets failure in logs, or return a 400 if it's strictly required.
-        # We will return a success with the whatsapp link anyway since DB save was successful.
         print("Warning: Failed to upload to Google Sheets")
 
     # Success Response with WhatsApp Link
