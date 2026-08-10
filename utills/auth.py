@@ -1,7 +1,8 @@
 from functools import wraps
 from flask import request, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
-from backend.models.registration import ADMIN
+from models.registration import ADMIN
+
 
 def GetSerializer():
     return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
-from backend.models.registration import db, ADMIN, REGISTRATION
-from backend.utills.auth import GenerateToken, token_required
+from models.registration import db, ADMIN, REGISTRATION
+from utills.auth import GenerateToken, token_required
+
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 

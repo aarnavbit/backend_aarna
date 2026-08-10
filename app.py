@@ -1,8 +1,9 @@
 from flask import Flask
-from backend.config.settings import CONFIG
-from backend.models.registration import db, ADMIN
-from backend.routes.userregistration import userregistration_bp
-from backend.routes.admin_routes import admin_bp
+from config.settings import CONFIG
+from models.registration import db, ADMIN
+from routes.userregistration import userregistration_bp
+from routes.admin_routes import admin_bp
+
 
 def SeedSuperAdmin():
     superadmin = ADMIN.query.filter_by(role='superadmin').first()

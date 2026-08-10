@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
-from backend.models.registration import REGISTRATION
-from backend.utills.sheets import SHEETSMANAGER
-from backend.config.settings import CONFIG
+from models.registration import REGISTRATION
+from utills.sheets import SHEETSMANAGER
+from config.settings import CONFIG
+
 
 userregistration_bp = Blueprint('userregistration', __name__)
 sheets_manager = SHEETSMANAGER()

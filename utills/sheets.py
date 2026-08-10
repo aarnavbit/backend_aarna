@@ -1,6 +1,7 @@
 import gspread
 from google.oauth2.service_account import Credentials
-from backend.config.settings import CONFIG
+from config.settings import CONFIG
+
 
 class SHEETSMANAGER:
     def __init__(self):
