@@ -5,15 +5,22 @@ from utills.auth import GenerateToken, token_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-@admin_bp.route('/login', methods=['POST'])
+@admin_bp.route('/login', methods=['POST', 'OPTIONS'])
+@admin_bp.route('/session', methods=['POST', 'OPTIONS'])
 def Login():
-    data = request.get_json()
-    if not data or 'rollnumber' not in data or 'password' not in data:
-        return jsonify({'report': 'Roll number and password are required'}), 400
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
 
-    admin = ADMIN.query.filter_by(rollnumber=data['rollnumber'].strip().upper()).first()
-    if not admin or not admin.CheckPassword(data['password']):
-        return jsonify({'report': 'Invalid credentials'}), 401
+    data = request.get_json() or {}
+    rollnumber = data.get('rollnumber') or data.get('rollNumber') or ''
+    password = data.get('password') or ''
+
+    if not rollnumber or not password:
+        return jsonify({'report': 'Roll number and password are required', 'error': {'message': 'Roll number and password are required'}}), 400
+
+    admin = ADMIN.query.filter_by(rollnumber=rollnumber.strip().upper()).first()
+    if not admin or not admin.CheckPassword(password):
+        return jsonify({'report': 'Invalid credentials', 'error': {'message': 'Invalid credentials'}}), 401
 
     token = GenerateToken(admin.id)
     return jsonify({
@@ -86,9 +93,13 @@ def ListSubAdmins(current_admin):
         })
     return jsonify({'subadmins': result}), 200
 
-@admin_bp.route('/applicants', methods=['GET'])
+@admin_bp.route('/applicants', methods=['GET', 'OPTIONS'])
+@admin_bp.route('/applications', methods=['GET', 'OPTIONS'])
 @token_required
 def GetApplicants(current_admin):
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+
     query = REGISTRATION.query
 
     if current_admin.role == 'subadmin':
@@ -118,4 +129,5 @@ def GetApplicants(current_admin):
             'leadershiprating': app.leadershiprating
         })
 
-    return jsonify({'applicants': result}), 200
+    return jsonify({'applicants': result, 'items': result, 'count': len(result)}), 200
+
