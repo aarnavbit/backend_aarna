@@ -22,6 +22,9 @@ def VerifyToken(token, max_age=86400): # Token valid for 24 hours
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'ok'}), 200
+
         token = None
         auth_header = request.headers.get('Authorization')
         if auth_header and auth_header.startswith('Bearer '):
