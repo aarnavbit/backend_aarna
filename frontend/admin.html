@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/flipcard/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FlipMatch — Admin Console & Live Event Control</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Login Screen -->
+    <section id="screen-admin-login" class="screen screen-active">
+      <div class="glass-card login-card">
+        <h1 class="game-title">ADMIN <span class="gradient-text">PANEL</span></h1>
+        <p class="game-subtitle">Enter password to access live event controls</p>
+        
+        <form id="admin-login-form" class="start-form">
+          <div class="input-group">
+            <label for="admin-password" class="input-label" style="text-align: left;">Password</label>
+            <input type="password" id="admin-password" class="text-input" placeholder="e.g. admin123" required>
+            <div id="login-error" class="error-msg hidden" style="margin-top: 8px;">Invalid password</div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-glow" style="margin-top: 16px; width: 100%;">
+            <span>LOGIN</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Dashboard Screen -->
+    <section id="screen-admin-dashboard" class="screen screen-hidden">
+      <div class="glass-card dashboard-card" style="margin-top: 20px;">
+        <header class="dashboard-header">
+          <div>
+            <div class="brand-badge" style="margin-bottom: 6px;">LIVE EVENT CONTROLLER</div>
+            <h2 class="dashboard-title">🏆 EVENT DASHBOARD</h2>
+          </div>
+          <div class="header-actions">
+            <button id="btn-play-game" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.88rem;">🎮 Play Game</button>
+            <button id="btn-logout" class="btn btn-secondary" aria-label="Logout" style="padding: 8px 14px; font-size: 0.88rem;">🚪 Logout</button>
+          </div>
+        </header>
+
+        <!-- Live Synchronized Event Controls -->
+        <div class="live-control-card">
+          <div class="control-header">
+            <div class="status-indicator-box">
+              <span class="status-label">GLOBAL GAME STATUS:</span>
+              <span id="admin-game-status-badge" class="admin-badge badge-waiting">🟡 LOBBY OPEN (WAITING)</span>
+            </div>
+            <div class="connected-box">
+              👥 <span id="admin-connected-count">0</span> Active Players
+            </div>
+          </div>
+
+          <div id="round-timer-row" class="round-timer-row hidden">
+            <span>⏱️ Round Elapsed: <strong id="admin-round-elapsed">00:00</strong></span>
+          </div>
+
+          <div class="live-action-buttons">
+            <button id="btn-admin-start-game" class="btn btn-primary btn-glow btn-action">
+              <span>▶️ START GAME ROUND (BROADCAST)</span>
+            </button>
+            <button id="btn-admin-stop-game" class="btn btn-danger btn-action" disabled>
+              <span>🛑 END CURRENT ROUND</span>
+            </button>
+            <button id="btn-admin-reset-lobby" class="btn btn-secondary btn-action">
+              <span>🔄 Reset to Waiting Lobby</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+          <div class="stat-box">
+            <div class="stat-value" id="stat-total-players">0</div>
+            <div class="stat-label">Total Submissions</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-highest-score">0</div>
+            <div class="stat-label">Top Score</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-avg-time">0s</div>
+            <div class="stat-label">Avg Duration</div>
+          </div>
+        </div>
+
+        <div class="dashboard-controls">
+          <button id="btn-refresh" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.9rem;">🔄 Refresh Data</button>
+          <button id="btn-export" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.9rem;">📥 Download CSV</button>
+          <button id="btn-reset" class="btn btn-danger" style="margin-left: auto;">⚠️ Reset All Scores</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player Name</th>
+                <th>Score</th>
+                <th>Time (s)</th>
+                <th>Matches</th>
+                <th>Mismatches</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="admin-leaderboard-body">
+              <tr>
+                <td colspan="7" class="loading-cell">Loading scores...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

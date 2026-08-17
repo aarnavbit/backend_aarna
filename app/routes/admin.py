@@ -58,49 +58,78 @@ async def admin_reset_lobby():
 
 @router.get("/scores", dependencies=[Depends(verify_admin)])
 def admin_get_scores(db: Session = Depends(get_db)):
-    entries = db.query(LeaderboardEntry).order_by(
-        desc(LeaderboardEntry.score),
-        LeaderboardEntry.duration_ms
+    grouped = db.query(
+        func.max(LeaderboardEntry.player_name).label("player_name"),
+        func.sum(LeaderboardEntry.score).label("score"),
+        func.sum(LeaderboardEntry.duration_ms).label("duration_ms"),
+        func.sum(LeaderboardEntry.rounds_completed).label("rounds_completed"),
+        func.sum(LeaderboardEntry.matches).label("matches"),
+        func.sum(LeaderboardEntry.mismatches).label("mismatches"),
+        func.max(LeaderboardEntry.created_at).label("created_at"),
+        func.max(LeaderboardEntry.session_id).label("session_id"),
+        func.min(LeaderboardEntry.id).label("id")
+    ).group_by(
+        func.lower(func.trim(LeaderboardEntry.player_name))
+    ).order_by(
+        desc("score"),
+        "duration_ms"
     ).all()
     
-    total_players = db.query(LeaderboardEntry).count()
-    top_score = db.query(func.max(LeaderboardEntry.score)).scalar() or 0
-    avg_duration = db.query(func.avg(LeaderboardEntry.duration_ms)).scalar() or 0
+    total_unique_players = len(grouped)
+    top_score = int(grouped[0].score or 0) if grouped else 0
+    total_duration = sum(int(g.duration_ms or 0) for g in grouped) if grouped else 0
+    avg_duration = (total_duration / total_unique_players) if total_unique_players > 0 else 0
     
     players = []
-    for i, entry in enumerate(entries):
+    for i, row in enumerate(grouped):
         players.append({
             "rank": i + 1,
-            "sessionId": entry.session_id,
-            "playerName": entry.player_name,
-            "score": entry.score,
-            "durationMs": entry.duration_ms,
-            "roundsCompleted": entry.rounds_completed,
-            "matches": entry.matches,
-            "mismatches": entry.mismatches,
-            "createdAt": entry.created_at
+            "id": row.id,
+            "sessionId": row.session_id,
+            "session_id": row.session_id,
+            "playerName": row.player_name,
+            "player_name": row.player_name,
+            "score": int(row.score or 0),
+            "durationMs": int(row.duration_ms or 0),
+            "duration_ms": int(row.duration_ms or 0),
+            "roundsCompleted": int(row.rounds_completed or 0),
+            "rounds_completed": int(row.rounds_completed or 0),
+            "matches": int(row.matches or 0),
+            "mismatches": int(row.mismatches or 0),
+            "createdAt": row.created_at or 0,
+            "created_at": row.created_at or 0
         })
     
     return {
         "success": True,
         "gameState": game_state.get_state(),
         "stats": {
-            "totalPlayers": total_players,
+            "totalPlayers": total_unique_players,
             "highestScore": top_score,
             "avgDurationSec": round(avg_duration / 1000, 1) if avg_duration else 0,
-            "total_players": total_players,
+            "total_players": total_unique_players,
             "top_score": top_score,
             "average_duration_ms": round(avg_duration, 2)
         },
         "players": players,
-        "entries": entries
+        "entries": players
     }
 
 @router.get("/export-csv", dependencies=[Depends(verify_admin)])
 def export_csv(db: Session = Depends(get_db)):
-    entries = db.query(LeaderboardEntry).order_by(
-        desc(LeaderboardEntry.score),
-        LeaderboardEntry.duration_ms
+    grouped = db.query(
+        func.max(LeaderboardEntry.player_name).label("player_name"),
+        func.sum(LeaderboardEntry.score).label("score"),
+        func.sum(LeaderboardEntry.duration_ms).label("duration_ms"),
+        func.sum(LeaderboardEntry.rounds_completed).label("rounds_completed"),
+        func.sum(LeaderboardEntry.matches).label("matches"),
+        func.sum(LeaderboardEntry.mismatches).label("mismatches"),
+        func.max(LeaderboardEntry.created_at).label("created_at")
+    ).group_by(
+        func.lower(func.trim(LeaderboardEntry.player_name))
+    ).order_by(
+        desc("score"),
+        "duration_ms"
     ).all()
     
     output = io.StringIO()
@@ -111,16 +140,16 @@ def export_csv(db: Session = Depends(get_db)):
         "Rounds Completed", "Matches", "Mismatches", "Submitted At"
     ])
     
-    for i, entry in enumerate(entries):
+    for i, entry in enumerate(grouped):
         writer.writerow([
             i + 1,
             entry.player_name,
-            entry.score,
-            entry.duration_ms,
-            entry.rounds_completed,
-            entry.matches,
-            entry.mismatches,
-            entry.created_at
+            int(entry.score or 0),
+            int(entry.duration_ms or 0),
+            int(entry.rounds_completed or 0),
+            int(entry.matches or 0),
+            int(entry.mismatches or 0),
+            entry.created_at or ""
         ])
         
     output.seek(0)

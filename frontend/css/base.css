@@ -1,0 +1,238 @@
+/* ==========================================================================
+   AARNA Neo-Brutalist Design System & CSS Variables
+   ========================================================================== */
+
+:root {
+  /* Core AARNA Palette */
+  --bg-primary: #f4795b;       /* Warm Coral / Terracotta */
+  --bg-secondary: #c9aef0;     /* Soft Lilac / Lavender */
+  --bg-secondary-dark: #bfa1e9;
+  --bg-cream: #fbeee0;         /* Warm Peach / Cream Surface */
+  --bg-white: #ffffff;
+
+  /* Accent & Action Colors */
+  --primary: #f4795b;
+  --primary-hover: #e86241;
+  --accent-lilac: #c9aef0;
+  --accent-gold: #fbbf24;
+  --accent-green: #10b981;
+  --accent-rose: #f43f5e;
+
+  /* Typography Colors */
+  --text-main: #3b2412;        /* Dark Espresso / Chocolate Brown */
+  --text-muted: #6b5344;       /* Medium Warm Brown */
+  --text-light: #ffffff;
+  --text-faint: #9c8273;
+
+  /* Card Colors */
+  --card-back-bg: #c9aef0;
+  --card-front-bg: #ffffff;
+  --card-border: 2px solid #3b2412;
+
+  /* Neo-Brutalist Borders & Hard Shadows */
+  --border-thick: 3px solid #3b2412;
+  --border-medium: 2px solid #3b2412;
+  --border-thin: 1.5px solid #3b2412;
+  --border-dashed: 2px dashed #3b2412;
+
+  --shadow-hard-lg: 6px 6px 0px #3b2412;
+  --shadow-hard-md: 4px 4px 0px #3b2412;
+  --shadow-hard-sm: 2px 2px 0px #3b2412;
+
+  /* Typography */
+  --font-heading: 'Quicksand', 'Poppins', -apple-system, sans-serif;
+  --font-main: 'Poppins', 'Quicksand', -apple-system, sans-serif;
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-full: 50px;
+  --max-app-width: 480px;
+}
+
+/* Reset & Base Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-main);
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+/* AARNA Signature Geometric Diamond / Checkerboard Pattern */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-primary);
+  background-image: 
+    linear-gradient(45deg, var(--bg-secondary) 25%, transparent 25%, transparent 75%, var(--bg-secondary) 75%),
+    linear-gradient(45deg, var(--bg-secondary) 25%, transparent 25%, transparent 75%, var(--bg-secondary) 75%);
+  background-size: 80px 80px;
+  background-position: 0 0, 40px 40px;
+}
+
+/* Main Container Shell */
+.app-container {
+  width: 100%;
+  max-width: var(--max-app-width);
+  height: 100%;
+  max-height: 880px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  padding: 16px;
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    max-height: 100vh;
+    padding: 12px;
+  }
+}
+
+/* Neo-Brutalist Cream Card Container */
+.glass-card {
+  background: var(--bg-cream);
+  border: var(--border-thick);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-hard-lg);
+  padding: 24px 20px;
+  color: var(--text-main);
+}
+
+/* Typography Helpers */
+.gradient-text {
+  color: var(--bg-primary);
+  text-shadow: 1.5px 1.5px 0px #3b2412;
+}
+
+.highlight-accent {
+  color: var(--bg-primary);
+  font-weight: 800;
+}
+
+.highlight-text {
+  background-color: var(--bg-secondary);
+  color: var(--text-main);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: var(--border-thin);
+  display: inline-block;
+  font-weight: 800;
+}
+
+/* Buttons with Neo-Brutalist Hard Shadows */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: var(--border-medium);
+  box-shadow: var(--shadow-hard-md);
+  outline: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  width: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #f4795b 0%, #e86241 100%);
+  color: #ffffff;
+}
+
+.btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #c9aef0 0%, #bfa1e9 100%);
+  color: var(--text-main);
+}
+
+.btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s;
+}
+
+.btn-link:hover, .btn-link:active {
+  color: var(--text-main);
+  text-decoration: underline;
+}
+
+/* Toast Container & Notification */
+.toast-container {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-white);
+  border: var(--border-medium);
+  box-shadow: var(--shadow-hard-md);
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+.toast-success { background: #dcfce7; border-color: var(--text-main); }
+.toast-warning { background: #fef3c7; border-color: var(--text-main); }
+.toast-error { background: #ffe4e6; border-color: var(--text-main); }
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hidden {
+  display: none !important;
+}

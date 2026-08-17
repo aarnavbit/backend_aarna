@@ -168,9 +168,42 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
 
 @router.get("/leaderboard")
 def get_leaderboard(limit: int = 20, db: Session = Depends(get_db)):
-    entries = db.query(LeaderboardEntry).order_by(
-        desc(LeaderboardEntry.score),
-        LeaderboardEntry.duration_ms
+    from sqlalchemy import func
+    
+    grouped = db.query(
+        func.max(LeaderboardEntry.player_name).label("player_name"),
+        func.sum(LeaderboardEntry.score).label("score"),
+        func.sum(LeaderboardEntry.duration_ms).label("duration_ms"),
+        func.sum(LeaderboardEntry.rounds_completed).label("rounds_completed"),
+        func.sum(LeaderboardEntry.matches).label("matches"),
+        func.sum(LeaderboardEntry.mismatches).label("mismatches"),
+        func.max(LeaderboardEntry.created_at).label("created_at"),
+        func.max(LeaderboardEntry.session_id).label("session_id"),
+        func.min(LeaderboardEntry.id).label("id")
+    ).group_by(
+        func.lower(func.trim(LeaderboardEntry.player_name))
+    ).order_by(
+        desc("score"),
+        "duration_ms"
     ).limit(limit).all()
     
-    return entries
+    results = []
+    for row in grouped:
+        results.append({
+            "id": row.id,
+            "sessionId": row.session_id,
+            "session_id": row.session_id,
+            "playerName": row.player_name,
+            "player_name": row.player_name,
+            "score": int(row.score or 0),
+            "durationMs": int(row.duration_ms or 0),
+            "duration_ms": int(row.duration_ms or 0),
+            "roundsCompleted": int(row.rounds_completed or 0),
+            "rounds_completed": int(row.rounds_completed or 0),
+            "matches": int(row.matches or 0),
+            "mismatches": int(row.mismatches or 0),
+            "createdAt": row.created_at or 0,
+            "created_at": row.created_at or 0,
+        })
+    
+    return results

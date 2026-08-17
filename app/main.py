@@ -36,7 +36,8 @@ app.add_middleware(
 )
 
 # Include API Routers
-app.include_router(player_router, prefix="/api/game", tags=["Flipcard Player"])
+app.include_router(player_router, prefix="/api/games", tags=["Flipcard Player"])
+app.include_router(player_router, prefix="/api/game", tags=["Flipcard Player (Legacy)"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Flipcard Admin"])
 app.include_router(recruitment_router, tags=["Recruitment & Portal Admin"])
 
@@ -51,4 +52,5 @@ if os.path.exists(frontend_path):
             response_headers["Cache-Control"] = "max-age=3600"
             return super().is_not_modified(response_headers, req_headers)
             
+    app.mount("/games", CustomStaticFiles(directory=frontend_path, html=True), name="games_frontend")
     app.mount("/", CustomStaticFiles(directory=frontend_path, html=True), name="frontend")

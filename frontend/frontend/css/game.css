@@ -1,0 +1,197 @@
+/* ==========================================================================
+   AARNA Game Screen & HUD Layout
+   ========================================================================== */
+
+#screen-game {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px 4px;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+/* Neo-Brutalist HUD Header */
+.game-hud {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-cream);
+  border: var(--border-thick);
+  box-shadow: var(--shadow-hard-md);
+  z-index: 10;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.hud-value {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+#hud-round-text {
+  color: var(--text-main);
+  background: var(--bg-secondary);
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--text-main);
+  font-size: 0.95rem;
+}
+
+#hud-score-text {
+  color: var(--bg-primary);
+  font-size: 1.35rem;
+  text-shadow: 1px 1px 0px #3b2412;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.score-bump {
+  animation: scorePulse 0.3s ease;
+}
+
+@keyframes scorePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); color: #16a34a; }
+  100% { transform: scale(1); }
+}
+
+.btn-icon-toggle {
+  background: var(--bg-white);
+  border: var(--border-medium);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hard-sm);
+  color: var(--text-main);
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: transform 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-toggle:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+/* Combo Banner */
+.combo-banner {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.combo-text {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg-primary);
+  color: #ffffff;
+  border: var(--border-medium);
+  box-shadow: var(--shadow-hard-sm);
+  animation: comboPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes comboPop {
+  0% { transform: scale(0.7); opacity: 0; }
+  70% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Grid Container */
+.grid-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-height: calc(100% - 130px);
+}
+
+/* 6 Card Grid Layout */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  max-width: 380px;
+  max-height: 480px;
+  margin: 0 auto;
+}
+
+@media (min-height: 700px) {
+  .card-grid {
+    gap: 16px;
+    max-height: 520px;
+  }
+}
+
+/* Bottom Game Footer */
+.game-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-cream);
+  border: var(--border-thick);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hard-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.player-tag strong {
+  color: var(--text-main);
+}
+
+.status-indicator {
+  color: var(--bg-primary);
+  font-weight: 800;
+}
+
+/* Jigsaw Board */
+#jigsaw-board {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#jigsaw-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+#jigsaw-canvas:active {
+  cursor: grabbing;
+}
