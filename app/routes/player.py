@@ -148,11 +148,11 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
     
     rank = None
     if entry:
-        faster_count = db.query(LeaderboardEntry).filter(
-            (LeaderboardEntry.duration_ms < entry.duration_ms) |
-            ((LeaderboardEntry.duration_ms == entry.duration_ms) & (LeaderboardEntry.score > entry.score))
+        higher_score_count = db.query(LeaderboardEntry).filter(
+            (LeaderboardEntry.score > entry.score) |
+            ((LeaderboardEntry.score == entry.score) & (LeaderboardEntry.duration_ms < entry.duration_ms))
         ).count()
-        rank = faster_count + 1
+        rank = higher_score_count + 1
         
     return {
         "session": {
@@ -172,19 +172,19 @@ def get_leaderboard(limit: int = 20, db: Session = Depends(get_db)):
     
     grouped = db.query(
         func.max(LeaderboardEntry.player_name).label("player_name"),
-        func.sum(LeaderboardEntry.score).label("score"),
-        func.sum(LeaderboardEntry.duration_ms).label("duration_ms"),
-        func.sum(LeaderboardEntry.rounds_completed).label("rounds_completed"),
-        func.sum(LeaderboardEntry.matches).label("matches"),
-        func.sum(LeaderboardEntry.mismatches).label("mismatches"),
+        func.max(LeaderboardEntry.score).label("score"),
+        func.min(LeaderboardEntry.duration_ms).label("duration_ms"),
+        func.max(LeaderboardEntry.rounds_completed).label("rounds_completed"),
+        func.max(LeaderboardEntry.matches).label("matches"),
+        func.min(LeaderboardEntry.mismatches).label("mismatches"),
         func.max(LeaderboardEntry.created_at).label("created_at"),
         func.max(LeaderboardEntry.session_id).label("session_id"),
         func.min(LeaderboardEntry.id).label("id")
     ).group_by(
         func.lower(func.trim(LeaderboardEntry.player_name))
     ).order_by(
-        "duration_ms",
-        desc("score")
+        desc(func.max(LeaderboardEntry.score)),
+        func.min(LeaderboardEntry.duration_ms).asc()
     ).limit(limit).all()
     
     results = []

@@ -160,9 +160,32 @@ class UIRenderer {
     }
   }
 
+  // Round Intro Overlay Announcement
+  showRoundAnnouncement(roundNum, title, description) {
+    let overlay = document.getElementById('round-intro-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'round-intro-overlay';
+      overlay.className = 'round-intro-overlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+      <div class="round-intro-card">
+        <div class="round-intro-badge">STAGE ${roundNum} OF 3</div>
+        <h2 class="round-intro-title">${title}</h2>
+        <p class="round-intro-desc">${description}</p>
+        <div class="round-intro-bar"></div>
+      </div>
+    `;
+    overlay.classList.add('is-active');
+    setTimeout(() => {
+      overlay.classList.remove('is-active');
+    }, 1400);
+  }
+
   // Update HUD
   updateHUD(state) {
-    if (this.hudRound) this.hudRound.textContent = `#${state.round}`;
+    if (this.hudRound) this.hudRound.textContent = `${state.round}/${state.totalRounds}`;
     if (this.hudPlayerName) this.hudPlayerName.textContent = state.playerName || 'Player';
     
     if (this.hudScore) {
@@ -172,9 +195,15 @@ class UIRenderer {
       this.hudScore.classList.add('score-bump');
     }
 
-    const pairsLeft = Math.max(0, 3 - state.matchesThisRound);
     if (this.roundPairsLeft) {
-      this.roundPairsLeft.textContent = `${pairsLeft} pair${pairsLeft === 1 ? '' : 's'} left`;
+      if (state.round === 1) {
+        const pairsLeft = Math.max(0, 3 - state.matchesThisRound);
+        this.roundPairsLeft.textContent = `${pairsLeft} pair${pairsLeft === 1 ? '' : 's'} left`;
+      } else if (state.round === 2) {
+        this.roundPairsLeft.textContent = `Jigsaw Puzzle`;
+      } else if (state.round === 3) {
+        this.roundPairsLeft.textContent = `15-Slider Puzzle`;
+      }
     }
 
     // Streak / Combo
@@ -195,51 +224,34 @@ class UIRenderer {
       cardEl.id = `card-${card.id}`;
       cardEl.dataset.cardId = card.id;
 
-      // Render content (Smart Image with Instant Emoji Fallback)
-      let imgSrc = null;
-      let emojiFallback = '✨';
+      // Resolve pre-existing image asset
+      let imgSrc = 'images/cards/card_1.webp';
+      let altText = 'Card Face';
 
       if (typeof card.content === 'object' && card.content !== null) {
-        imgSrc = card.content.img || null;
-        emojiFallback = card.content.fallbackEmoji || card.content.emoji || '✨';
+        imgSrc = card.content.img || 'images/cards/card_1.webp';
+        altText = card.content.name || 'Card Face';
       } else if (typeof card.content === 'string') {
-        const lower = card.content.toLowerCase();
-        if (lower.startsWith('http') || lower.startsWith('./') || lower.startsWith('/') || lower.startsWith('images/') ||
-            lower.endsWith('.webp') || lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.svg')) {
-          imgSrc = card.content;
-          emojiFallback = '🖼️';
-        } else {
-          emojiFallback = card.content;
-        }
-      }
-
-      let faceHtml = '';
-      if (imgSrc) {
-        faceHtml = `
-          <span class="card-content-emoji">${emojiFallback}</span>
-          <img 
-            src="${imgSrc}" 
-            alt="card face" 
-            class="card-content-img" 
-            loading="eager" 
-            decoding="async"
-            onload="this.classList.add('is-loaded');" 
-            onerror="this.style.display='none';"
-          >
-        `;
-      } else {
-        faceHtml = `<span class="card-content-emoji">${emojiFallback}</span>`;
+        imgSrc = card.content;
       }
 
       cardEl.innerHTML = `
         <div class="card-inner">
           <div class="card-face card-face-back">
             <div class="card-back-pattern">
-              <span class="card-back-icon">✨</span>
+              <img src="images/Logo.png" alt="AARNA" class="card-back-logo" loading="eager" decoding="async" />
             </div>
           </div>
           <div class="card-face card-face-front">
-            ${faceHtml}
+            <img 
+              src="${imgSrc}" 
+              alt="${altText}" 
+              class="card-content-img is-loaded" 
+              loading="eager" 
+              decoding="async"
+              draggable="false"
+              onerror="this.onerror=null; this.src='images/cards/card_1.webp';"
+            />
           </div>
         </div>
       `;

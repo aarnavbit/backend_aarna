@@ -152,6 +152,7 @@ body {
   border: var(--border-medium);
   box-shadow: var(--shadow-hard-md);
   outline: none;
+  text-decoration: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   width: 100%;
 }

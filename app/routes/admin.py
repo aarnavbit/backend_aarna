@@ -60,19 +60,19 @@ async def admin_reset_lobby():
 def admin_get_scores(db: Session = Depends(get_db)):
     grouped = db.query(
         func.max(LeaderboardEntry.player_name).label("player_name"),
-        func.sum(LeaderboardEntry.score).label("score"),
-        func.sum(LeaderboardEntry.duration_ms).label("duration_ms"),
-        func.sum(LeaderboardEntry.rounds_completed).label("rounds_completed"),
-        func.sum(LeaderboardEntry.matches).label("matches"),
-        func.sum(LeaderboardEntry.mismatches).label("mismatches"),
+        func.max(LeaderboardEntry.score).label("score"),
+        func.min(LeaderboardEntry.duration_ms).label("duration_ms"),
+        func.max(LeaderboardEntry.rounds_completed).label("rounds_completed"),
+        func.max(LeaderboardEntry.matches).label("matches"),
+        func.min(LeaderboardEntry.mismatches).label("mismatches"),
         func.max(LeaderboardEntry.created_at).label("created_at"),
         func.max(LeaderboardEntry.session_id).label("session_id"),
         func.min(LeaderboardEntry.id).label("id")
     ).group_by(
         func.lower(func.trim(LeaderboardEntry.player_name))
     ).order_by(
-        "duration_ms",
-        desc("score")
+        desc(func.max(LeaderboardEntry.score)),
+        func.min(LeaderboardEntry.duration_ms).asc()
     ).all()
     
     total_unique_players = len(grouped)

@@ -39,12 +39,18 @@ class JigsawEngine {
     this.tray = [];
     this.canvas.style.display = 'block';
 
-    if (this.isLoaded) {
+    if (this.isLoaded && this.img.complete && this.img.naturalWidth > 0) {
       this.initGame();
     } else {
       this.img.onload = () => {
         this.isLoaded = true;
         this.initGame();
+      };
+      this.img.onerror = () => {
+        if (this.imgSrc !== 'images/Logo.png') {
+          this.imgSrc = 'images/Logo.png';
+          this.img.src = 'images/Logo.png';
+        }
       };
       this.img.src = this.imgSrc;
     }
@@ -68,7 +74,7 @@ class JigsawEngine {
     this.canvas.height = (parent.clientHeight || window.innerHeight * 0.6) + 200; // Extra space for tray
     
     // Fit board to aspect ratio
-    const imgAspect = this.img.width / this.img.height;
+    const imgAspect = (this.img.width && this.img.height) ? (this.img.width / this.img.height) : 1;
     const maxBoardW = this.canvas.width * 0.95;
     const maxBoardH = this.canvas.height * 0.55; 
 
@@ -114,15 +120,15 @@ class JigsawEngine {
         
         const padding = Math.max(this.w, this.h) * 0.3;
         const pCanvas = document.createElement('canvas');
-        pCanvas.width = this.w + padding * 2;
-        pCanvas.height = this.h + padding * 2;
+        pCanvas.width = Math.ceil(this.w + padding * 2);
+        pCanvas.height = Math.ceil(this.h + padding * 2);
         const pCtx = pCanvas.getContext('2d');
         
         // Draw path
         this.drawPiecePath(pCtx, padding, padding, this.w, this.h, top, right, bottom, left);
         pCtx.clip();
         
-        // Draw image slice
+        // Draw image slice with safe bounds clamping
         const sx = c * (this.img.width / this.cols);
         const sy = r * (this.img.height / this.rows);
         const sw = this.img.width / this.cols;
@@ -135,7 +141,21 @@ class JigsawEngine {
         const srcSw = sw + (sw * padRatioW * 2);
         const srcSh = sh + (sh * padRatioH * 2);
 
-        pCtx.drawImage(this.img, srcSx, srcSy, srcSw, srcSh, 0, 0, pCanvas.width, pCanvas.height);
+        const clampedSrcX = Math.max(0, srcSx);
+        const clampedSrcY = Math.max(0, srcSy);
+        const clampedSrcMaxX = Math.min(this.img.width, srcSx + srcSw);
+        const clampedSrcMaxY = Math.min(this.img.height, srcSy + srcSh);
+        const clampedSrcW = Math.max(0, clampedSrcMaxX - clampedSrcX);
+        const clampedSrcH = Math.max(0, clampedSrcMaxY - clampedSrcY);
+
+        const destX = ((clampedSrcX - srcSx) / srcSw) * pCanvas.width;
+        const destY = ((clampedSrcY - srcSy) / srcSh) * pCanvas.height;
+        const destW = (clampedSrcW / srcSw) * pCanvas.width;
+        const destH = (clampedSrcH / srcSh) * pCanvas.height;
+
+        if (clampedSrcW > 0 && clampedSrcH > 0) {
+          pCtx.drawImage(this.img, clampedSrcX, clampedSrcY, clampedSrcW, clampedSrcH, destX, destY, destW, destH);
+        }
         
         // Outline
         pCtx.lineWidth = 2.5;

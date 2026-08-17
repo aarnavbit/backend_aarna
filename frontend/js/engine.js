@@ -19,9 +19,20 @@ class GameEngine {
 
   // Generate shuffled deck of cards for a round
   generateRoundDeck(roundNumber, imagePool, pairsCount = 3) {
+    const defaultPool = [
+      { img: "images/cards/card_1.webp", name: "Card 1" },
+      { img: "images/cards/card_2.webp", name: "Card 2" },
+      { img: "images/cards/card_3.webp", name: "Card 3" },
+      { img: "images/cards/card_4.webp", name: "Card 4" },
+      { img: "images/cards/card_5.webp", name: "Card 5" },
+      { img: "images/cards/meme1.webp", name: "Meme 1" },
+      { img: "images/cards/meme2.webp", name: "Meme 2" },
+      { img: "images/cards/meme3.webp", name: "Meme 3" },
+      { img: "images/cards/meme4.webp", name: "Meme 4" }
+    ];
     const pool = (Array.isArray(imagePool) && imagePool.length >= pairsCount)
       ? imagePool
-      : ["⚡", "🔥", "🚀", "💎", "⭐", "🍕"];
+      : defaultPool;
 
     // 1. Pick unique items from pool
     const shuffledPool = this.shuffle(pool);

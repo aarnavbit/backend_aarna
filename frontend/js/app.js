@@ -5,7 +5,10 @@
 document.addEventListener('DOMContentLoaded', () => {
   const engine = new GameEngine(GameConfig);
 
-  // Preload card images into memory immediately for zero-lag instant display
+  // Preload logo and card images into memory immediately for zero-lag instant display
+  const logoPreload = new Image();
+  logoPreload.src = 'images/Logo.png';
+
   if (Array.isArray(GameConfig.imagePool)) {
     GameConfig.imagePool.forEach(item => {
       const src = (typeof item === 'object' && item && item.img) ? item.img : (typeof item === 'string' && (item.startsWith('http') || item.startsWith('images/') || item.endsWith('.webp') || item.endsWith('.png') || item.endsWith('.jpg') || item.endsWith('.jpeg')) ? item : null);
@@ -172,7 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Round Gameplay Management
   // ------------------------------------------------------------------------
   function startRound(roundNum) {
-    if (currentGameState.roundNumber === 3 || roundNum === 3) {
+    const targetRound = Number(roundNum) || 1;
+
+    if (targetRound === 3) {
       // Round 3: 15-Puzzle Image Slider Mode
       if (UI.cardGrid) UI.cardGrid.classList.add('hidden');
       const jigsawBoard = document.getElementById('jigsaw-board');
@@ -180,31 +185,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const sliderBoard = document.getElementById('slider-board');
       if (sliderBoard) sliderBoard.classList.remove('hidden');
 
+      UI.showRoundAnnouncement(3, '15-Puzzle Slider', 'Slide tiles to restore the brand image!');
+      AppState.startRound(3, []);
+
       if (!window.sliderGame) {
         window.sliderGame = new SliderEngine('slider-board', 'images/Logo.png');
       }
       
-      AppState.startRound(roundNum, []);
-      window.sliderGame.startPuzzle(roundNum, (moves) => {
-        // Sub-round complete
+      window.sliderGame.startPuzzle(3, (moves) => {
         const roundDurationMs = Date.now() - AppState.roundStartTime;
         const bonus = engine.calculateRoundBonus(roundDurationMs);
-        AppState.matchesThisRound = GameConfig.pairsPerRound || 3;
+        AppState.matchesThisRound = 15;
         AppState.totalMatches += AppState.matchesThisRound;
         AppState.recordRoundCompletion(bonus.roundBonus, bonus.speedBonus, roundDurationMs);
 
+        // Sync intermediate score for Round 3
+        submitIntermediateRoundScore(3);
+
         setTimeout(() => {
-          if (AppState.round < GameConfig.totalRounds) {
-            startRound(AppState.round + 1);
-          } else {
-            handleGameEnd();
-          }
-        }, 1500);
+          handleGameEnd();
+        }, 1000);
       });
       return;
     }
 
-    if (currentGameState.roundNumber === 2 || roundNum === 2) {
+    if (targetRound === 2) {
       // Round 2: Jigsaw Puzzle Mode
       if (UI.cardGrid) UI.cardGrid.classList.add('hidden');
       const sliderBoard = document.getElementById('slider-board');
@@ -212,44 +217,50 @@ document.addEventListener('DOMContentLoaded', () => {
       const jigsawBoard = document.getElementById('jigsaw-board');
       if (jigsawBoard) jigsawBoard.classList.remove('hidden');
 
+      UI.showRoundAnnouncement(2, 'Jigsaw Puzzle', 'Drag & place all 12 pieces into the board!');
+      AppState.startRound(2, []);
+
       if (!window.jigsawGame) {
         window.jigsawGame = new JigsawEngine('jigsaw-canvas');
       }
       
-      AppState.startRound(roundNum, []);
-      window.jigsawGame.startPuzzle(roundNum, () => {
-        // Sub-round complete
+      window.jigsawGame.startPuzzle(2, () => {
         const roundDurationMs = Date.now() - AppState.roundStartTime;
         const bonus = engine.calculateRoundBonus(roundDurationMs);
-        AppState.matchesThisRound = GameConfig.pairsPerRound || 3; // Faux max matches
+        AppState.matchesThisRound = 12;
         AppState.totalMatches += AppState.matchesThisRound;
         AppState.recordRoundCompletion(bonus.roundBonus, bonus.speedBonus, roundDurationMs);
 
+        // Sync intermediate score for Round 2
+        submitIntermediateRoundScore(2);
+
         setTimeout(() => {
           if (AppState.round < GameConfig.totalRounds) {
-            startRound(AppState.round + 1);
+            startRound(3);
           } else {
             handleGameEnd();
           }
-        }, 1500);
+        }, 1000);
       });
       return;
     }
 
-    // Default: Flipcard Mode
+    // Round 1: Flipcard Mode
     const jigsawBoard = document.getElementById('jigsaw-board');
     if (jigsawBoard) jigsawBoard.classList.add('hidden');
     const sliderBoard = document.getElementById('slider-board');
     if (sliderBoard) sliderBoard.classList.add('hidden');
     if (UI.cardGrid) UI.cardGrid.classList.remove('hidden');
 
+    UI.showRoundAnnouncement(1, 'Card Matching', 'Find & match 3 pairs in fewest moves!');
+
     const deck = engine.generateRoundDeck(
-      roundNum,
+      1,
       GameConfig.imagePool,
       GameConfig.pairsPerRound
     );
 
-    AppState.startRound(roundNum, deck);
+    AppState.startRound(1, deck);
     UI.renderDeck(deck, handleCardClick);
   }
 
@@ -263,50 +274,100 @@ document.addEventListener('DOMContentLoaded', () => {
         const bonus = engine.calculateRoundBonus(roundDurationMs);
         AppState.recordRoundCompletion(bonus.roundBonus, bonus.speedBonus, roundDurationMs);
 
+        // Send non-blocking intermediate score update after round 1
+        submitIntermediateRoundScore(1);
+
         // Check if next round or final game over
         setTimeout(() => {
           if (AppState.round < GameConfig.totalRounds) {
-            startRound(AppState.round + 1);
+            startRound(2);
           } else {
             handleGameEnd();
           }
-        }, 600);
+        }, 1000);
       }
     }
   }
 
   // ------------------------------------------------------------------------
-  // 3. Final Game Completion & Score Submission
+  // 3. Multi-Round Non-blocking Intermediate Score Submissions
+  // ------------------------------------------------------------------------
+  function submitIntermediateRoundScore(completedRound) {
+    const sendTime = new Date();
+    const intermediatePayload = {
+      sessionId: AppState.sessionId,
+      session_id: AppState.sessionId,
+      playerName: AppState.playerName,
+      player_name: AppState.playerName,
+      matches: AppState.totalMatches,
+      mismatches: AppState.totalMismatches,
+      roundsCompleted: completedRound,
+      rounds_completed: completedRound,
+      durationMs: Math.max(600 * completedRound, Date.now() - AppState.gameStartTime),
+      duration_ms: Math.max(600 * completedRound, Date.now() - AppState.gameStartTime),
+      actions: {
+        roundsCompleted: completedRound,
+        matches: AppState.totalMatches,
+        mismatches: AppState.totalMismatches,
+        durationMs: Math.max(600 * completedRound, Date.now() - AppState.gameStartTime),
+        roundBreakdown: AppState.roundBreakdown,
+        intermediate: true,
+        timestampSent: sendTime.toISOString()
+      }
+    };
+
+    // Non-blocking fire-and-forget; never penalize or block user if net is slow
+    Api.submitScore(intermediatePayload).catch((err) => {
+      console.warn(`[Live Sync] Round ${completedRound} intermediate sync skipped (slow connection):`, err.message);
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // 4. Final Game Completion & Master Overriding Score Submission
   // ------------------------------------------------------------------------
   async function handleGameEnd() {
     AppState.recordGameCompletion();
     Sound.playVictory();
 
+    const sendTime = new Date();
+    const timeFormatted = sendTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
     const submissionPayload = {
       sessionId: AppState.sessionId,
+      session_id: AppState.sessionId,
       playerName: AppState.playerName,
+      player_name: AppState.playerName,
+      matches: AppState.totalMatches,
+      mismatches: AppState.totalMismatches,
+      roundsCompleted: AppState.totalRounds,
+      rounds_completed: AppState.totalRounds,
+      durationMs: AppState.gameEndTime - AppState.gameStartTime,
+      duration_ms: AppState.gameEndTime - AppState.gameStartTime,
       actions: {
         roundsCompleted: AppState.totalRounds,
         matches: AppState.totalMatches,
         mismatches: AppState.totalMismatches,
         durationMs: AppState.gameEndTime - AppState.gameStartTime,
-        roundBreakdown: AppState.roundBreakdown
+        roundBreakdown: AppState.roundBreakdown,
+        isFinalOverride: true,
+        timestampSent: sendTime.toISOString(),
+        timeString: timeFormatted
       }
     };
 
     let serverResult = null;
     try {
       serverResult = await Api.submitScore(submissionPayload);
-      if (serverResult.roundEnded) {
-        UI.syncStatusMsg.innerHTML = '<span class="sync-dot" style="background:#ef4444;"></span> Round ended by host. Score not ranked.';
-        UI.showToast('Round ended before submission. Score not ranked.', 'warning', 4000);
+      if (serverResult && serverResult.roundEnded) {
+        UI.syncStatusMsg.innerHTML = `<span class="sync-dot" style="background:#ef4444;"></span> Round ended by host (Sent: ${timeFormatted}). Score not ranked.`;
+        UI.showToast(`Round ended before submission. Sent at ${timeFormatted}.`, 'warning', 4000);
       } else {
-        UI.syncStatusMsg.innerHTML = '<span class="sync-dot"></span> Score synced to live rankings!';
+        UI.syncStatusMsg.innerHTML = `<span class="sync-dot"></span> Final score synced to live rankings! (Sent: ${timeFormatted})`;
       }
     } catch (err) {
-      console.warn('[Score Submit] Failed online submission, queueing locally:', err.message);
+      console.warn('[Score Submit] Failed final online submission, queueing locally:', err.message);
       ScoreQueue.enqueue(submissionPayload);
-      UI.syncStatusMsg.innerHTML = '<span class="sync-dot" style="background:#f59e0b;"></span> Saved offline. Will sync when connected!';
+      UI.syncStatusMsg.innerHTML = `<span class="sync-dot" style="background:#f59e0b;"></span> Saved offline (Sent: ${timeFormatted}). Syncing when connected!`;
     }
 
     UI.renderResult(AppState, serverResult);
@@ -314,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ------------------------------------------------------------------------
-  // 4. Leaderboard Flow
+  // 5. Leaderboard Flow
   // ------------------------------------------------------------------------
   async function loadLeaderboard() {
     AppState.setScreen('leaderboard');

@@ -69,17 +69,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 12px;
 }
 
-.card-back-icon {
-  font-size: 1.8rem;
-  color: var(--text-main);
-  filter: drop-shadow(1px 1px 0px #ffffff);
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.card-back-logo {
+  max-width: 70%;
+  max-height: 70%;
+  object-fit: contain;
+  filter: drop-shadow(1px 2px 3px rgba(59, 36, 18, 0.25));
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.card-item:hover .card-back-icon {
-  transform: scale(1.15) rotate(10deg);
+.card-item:hover .card-back-logo {
+  transform: scale(1.12) rotate(4deg);
 }
 
 /* Card Front (Clean Cream/White with High Contrast) */
@@ -89,34 +94,20 @@
   border: var(--border-medium);
   position: relative;
   overflow: hidden;
-}
-
-.card-content-emoji {
-  font-size: 2.8rem;
-  line-height: 1;
-  filter: drop-shadow(2px 2px 0px rgba(59, 36, 18, 0.15));
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
 }
 
 .card-content-img {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: calc(var(--radius-md) - 2px);
-  opacity: 0;
-  transition: opacity 0.22s ease-in;
-}
-
-.card-content-img.is-loaded {
-  opacity: 1;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 0.2s ease;
 }
 
 /* Match Animation */
@@ -131,7 +122,7 @@
   box-shadow: 0 0 0 2px #10b981, var(--shadow-hard-md);
 }
 
-.card-item.is-matched .card-content-emoji {
+.card-item.is-matched .card-content-img {
   animation: matchBounce 0.4s ease;
 }
 

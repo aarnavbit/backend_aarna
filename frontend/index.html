@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/flipcard/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="Live Event Card Matching Game - Fast, fun, mobile-first memory challenge with live leaderboard rankings!">
@@ -38,8 +39,8 @@
         </div>
 
         <div class="instructions-pill">
-          <div class="step-item"><span class="step-num">1</span> Wait for Host</div>
-          <div class="step-item"><span class="step-num">2</span> Complete Challenges</div>
+          <div class="step-item"><span class="step-num">1</span> 3 Quick Rounds</div>
+          <div class="step-item"><span class="step-num">2</span> Match 3 Pairs Each</div>
           <div class="step-item"><span class="step-num">3</span> Beat the Clock</div>
         </div>
 
@@ -84,7 +85,7 @@
       <header class="game-hud glass-bar">
         <div class="hud-item hud-round">
           <span class="hud-label">ROUND</span>
-          <span id="hud-round-text" class="hud-value highlight-accent">-</span>
+          <span id="hud-round-text" class="hud-value highlight-accent">1/3</span>
         </div>
         <div class="hud-item hud-score">
           <span class="hud-label">SCORE</span>
@@ -222,6 +223,23 @@
 
     <!-- Floating Confetti Canvas -->
     <canvas id="confetti-canvas" class="confetti-canvas" pointer-events="none"></canvas>
+
+    <!-- Thank You Overlay -->
+    <div id="thank-you-overlay" class="thank-you-overlay">
+      <div class="glass-card overlay-card">
+        <h2 class="overlay-title">Thank You For Playing!</h2>
+        <p class="overlay-text">We hope you enjoyed the games.</p>
+        <div class="overlay-actions">
+          <a href="https://www.instagram.com/aarna.vbit/" target="_blank" class="btn btn-secondary">
+            Our Social
+          </a>
+          <a href="/" target="_blank" class="btn btn-primary btn-glow">
+            Visit Us
+          </a>
+        </div>
+        <button id="btn-close-overlay" class="btn-icon-close" aria-label="Close">X</button>
+      </div>
+    </div>
 
   </div>
 
