@@ -39,17 +39,20 @@ class JigsawEngine {
     this.tray = [];
     this.canvas.style.display = 'block';
 
-    if (this.isLoaded && this.img.complete && this.img.naturalWidth > 0) {
+    const onImageReady = () => {
+      this.isLoaded = true;
       this.initGame();
+    };
+
+    if (this.img.complete && this.img.naturalWidth > 0) {
+      onImageReady();
     } else {
-      this.img.onload = () => {
-        this.isLoaded = true;
-        this.initGame();
-      };
+      this.img.onload = onImageReady;
       this.img.onerror = () => {
         if (this.imgSrc !== 'images/Logo.png') {
           this.imgSrc = 'images/Logo.png';
           this.img.src = 'images/Logo.png';
+          this.img.onload = onImageReady;
         }
       };
       this.img.src = this.imgSrc;
@@ -70,13 +73,18 @@ class JigsawEngine {
 
   resizeCanvas() {
     const parent = this.canvas.parentElement;
-    this.canvas.width = parent.clientWidth || window.innerWidth * 0.9;
-    this.canvas.height = (parent.clientHeight || window.innerHeight * 0.6) + 200; // Extra space for tray
+    const availW = parent.clientWidth || 360;
+    const availH = (parent.clientHeight && parent.clientHeight > 200) ? parent.clientHeight : 520;
+    
+    this.canvas.width = Math.min(availW, 460);
+    this.canvas.height = availH;
     
     // Fit board to aspect ratio
-    const imgAspect = (this.img.width && this.img.height) ? (this.img.width / this.img.height) : 1;
-    const maxBoardW = this.canvas.width * 0.95;
-    const maxBoardH = this.canvas.height * 0.55; 
+    const imgAspect = (this.img.naturalWidth && this.img.naturalHeight) 
+      ? (this.img.naturalWidth / this.img.naturalHeight) 
+      : 1.33;
+    const maxBoardW = this.canvas.width * 0.92;
+    const maxBoardH = this.canvas.height * 0.50; 
 
     if (maxBoardW / maxBoardH > imgAspect) {
       this.boardH = maxBoardH;
@@ -87,7 +95,7 @@ class JigsawEngine {
     }
     
     this.boardX = (this.canvas.width - this.boardW) / 2;
-    this.boardY = 10;
+    this.boardY = 12;
   }
 
   generateEdges() {
@@ -306,9 +314,11 @@ class JigsawEngine {
       const rect = this.canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = rect.width ? (this.canvas.width / rect.width) : 1;
+      const scaleY = rect.height ? (this.canvas.height / rect.height) : 1;
       return {
-        x: clientX - rect.left,
-        y: clientY - rect.top
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
       };
     };
 

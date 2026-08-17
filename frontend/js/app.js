@@ -158,12 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
       UI.showToast('Starting offline mode. Score will sync later!', 'warning', 2500);
     }
 
-    // Initialize App State
+    // Initialize App State with broadcast event round or Round 1
+    const eventRound = Number(currentGameState.roundNumber || currentGameState.round_number);
+    const initialRound = (eventRound >= 1 && eventRound <= 3) ? eventRound : 1;
+
     AppState.initSession(sessionId, rawName, GameConfig.totalRounds);
     AppState.setScreen('game');
 
-    // Start Round 1
-    startRound(1);
+    // Launch active stage
+    startRound(initialRound);
   }
 
   startForm.addEventListener('submit', (e) => {
