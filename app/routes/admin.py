@@ -23,26 +23,38 @@ def verify_admin(x_admin_password: str = Header(...)):
 @router.post("/login")
 def login(req: AdminLoginRequest):
     if req.password == settings.ADMIN_PASSWORD:
-        return {"success": True}
+        return {
+            "success": True,
+            "gameState": game_state.get_state()
+        }
     raise HTTPException(status_code=401, detail="Invalid admin password")
 
 @router.post("/game/start", dependencies=[Depends(verify_admin)])
 async def admin_start_game():
     state = game_state.start_round()
     await broadcast_game_started()
-    return state
+    return {
+        "success": True,
+        "gameState": state
+    }
 
 @router.post("/game/stop", dependencies=[Depends(verify_admin)])
 async def admin_stop_game():
     state = game_state.stop_round()
     await broadcast_game_ended()
-    return state
+    return {
+        "success": True,
+        "gameState": state
+    }
 
 @router.post("/game/reset-lobby", dependencies=[Depends(verify_admin)])
 async def admin_reset_lobby():
     state = game_state.reset_lobby()
     await broadcast_lobby_reset()
-    return state
+    return {
+        "success": True,
+        "gameState": state
+    }
 
 @router.get("/scores", dependencies=[Depends(verify_admin)])
 def admin_get_scores(db: Session = Depends(get_db)):
@@ -55,12 +67,32 @@ def admin_get_scores(db: Session = Depends(get_db)):
     top_score = db.query(func.max(LeaderboardEntry.score)).scalar() or 0
     avg_duration = db.query(func.avg(LeaderboardEntry.duration_ms)).scalar() or 0
     
+    players = []
+    for i, entry in enumerate(entries):
+        players.append({
+            "rank": i + 1,
+            "sessionId": entry.session_id,
+            "playerName": entry.player_name,
+            "score": entry.score,
+            "durationMs": entry.duration_ms,
+            "roundsCompleted": entry.rounds_completed,
+            "matches": entry.matches,
+            "mismatches": entry.mismatches,
+            "createdAt": entry.created_at
+        })
+    
     return {
+        "success": True,
+        "gameState": game_state.get_state(),
         "stats": {
+            "totalPlayers": total_players,
+            "highestScore": top_score,
+            "avgDurationSec": round(avg_duration / 1000, 1) if avg_duration else 0,
             "total_players": total_players,
             "top_score": top_score,
             "average_duration_ms": round(avg_duration, 2)
         },
+        "players": players,
         "entries": entries
     }
 
@@ -108,4 +140,8 @@ async def reset_data(db: Session = Depends(get_db)):
     state = game_state.reset_lobby()
     await broadcast_lobby_reset()
     
-    return {"message": "All data cleared successfully", "state": state}
+    return {
+        "success": True,
+        "message": "All data cleared successfully",
+        "gameState": state
+    }

@@ -6,15 +6,22 @@ import socketio
 import os
 
 from app.config import settings
-from app.database import engine, Base
+from app.database import engine, Base, SessionLocal
+import app.models # Ensure all models are registered
 from app.routes.player import router as player_router
 from app.routes.admin import router as admin_router
+from app.routes.recruitment import router as recruitment_router
+from app.services.auth import seed_super_admin
 from app.socketio_app import sio
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Live Event Card Matching Game API")
+# Auto-seed Super Admin if not present
+with SessionLocal() as db_session:
+    seed_super_admin(db_session)
+
+app = FastAPI(title="AARNA Recruitment & Live Event Game API")
 
 # GZip Middleware
 app.add_middleware(GZipMiddleware, minimum_size=256)
@@ -29,19 +36,18 @@ app.add_middleware(
 )
 
 # Include API Routers
-app.include_router(player_router, prefix="/api/game", tags=["Player"])
-app.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(player_router, prefix="/api/game", tags=["Flipcard Player"])
+app.include_router(admin_router, prefix="/api/admin", tags=["Flipcard Admin"])
+app.include_router(recruitment_router, tags=["Recruitment & Portal Admin"])
 
 # Mount Socket.IO app
 app.mount("/socket.io", socketio.ASGIApp(sio))
 
-# Mount Frontend Static Files with Cache-Control
-# Assuming the frontend is located in a 'frontend' directory at the project root
+# Mount Frontend Static Files with Cache-Control (if present)
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.exists(frontend_path):
     class CustomStaticFiles(StaticFiles):
         def is_not_modified(self, response_headers, req_headers) -> bool:
-            # Set Cache-Control header
             response_headers["Cache-Control"] = "max-age=3600"
             return super().is_not_modified(response_headers, req_headers)
             

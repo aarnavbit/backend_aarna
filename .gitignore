@@ -9,6 +9,8 @@ service_account*.json
 
 # Database & SQLite files
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 instance/
 

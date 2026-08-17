@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = None
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
     ADMIN_PASSWORD: str = "admin123"
+    SECRET_KEY: str = "aarna_recruitment_jwt_secret_key_2026"
+    DEFAULT_SUPERADMIN_ROLL: str = "ADMIN001"
+    DEFAULT_SUPERADMIN_PASS: str = "adminpassword123"
+    WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/"
     CORS_ORIGINS: Union[str, List[str]] = ["*"]
     
     model_config = SettingsConfigDict(
