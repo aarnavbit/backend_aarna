@@ -9,9 +9,24 @@ class UIRenderer {
     this.screens = {
       start: document.getElementById('screen-start'),
       game: document.getElementById('screen-game'),
+      intermission: document.getElementById('screen-intermission'),
       result: document.getElementById('screen-result'),
       leaderboard: document.getElementById('screen-leaderboard')
     };
+
+    // Intermission Elements
+    this.intermissionStageBadge = document.getElementById('intermission-stage-badge');
+    this.intermissionTitle = document.getElementById('intermission-title');
+    this.intermissionPlayerName = document.getElementById('intermission-player-name');
+    this.intermissionTotalScore = document.getElementById('intermission-total-score');
+    this.intermissionLiveRank = document.getElementById('intermission-live-rank');
+    this.intermissionStageTime = document.getElementById('intermission-stage-time');
+    this.intermissionStageMatches = document.getElementById('intermission-stage-matches');
+    this.intermissionSpeedBonus = document.getElementById('intermission-speed-bonus');
+    this.intermissionStreakVal = document.getElementById('intermission-streak-val');
+    this.intermissionBroadcastPill = document.getElementById('intermission-broadcast-pill');
+    this.intermissionBroadcastText = document.getElementById('intermission-broadcast-text');
+    this.btnIntermissionLeaderboard = document.getElementById('btn-intermission-leaderboard');
 
     // HUD Elements
     this.hudRound = document.getElementById('hud-round-text');
@@ -52,6 +67,17 @@ class UIRenderer {
     this.toastContainer = document.getElementById('toast-container');
     this.confettiCanvas = document.getElementById('confetti-canvas');
 
+    // Thank You Overlay
+    this.thankYouOverlay = document.getElementById('thank-you-overlay');
+    this.btnCloseOverlay = document.getElementById('btn-close-overlay');
+    if (this.btnCloseOverlay) {
+      this.btnCloseOverlay.addEventListener('click', () => {
+        if (this.thankYouOverlay) {
+          this.thankYouOverlay.classList.remove('show');
+        }
+      });
+    }
+
     this.timerInterval = null;
   }
 
@@ -67,6 +93,11 @@ class UIRenderer {
         el.classList.add('screen-hidden');
       }
     });
+
+    // Hide thank you overlay when changing screens (e.g. back to start or game)
+    if (screenName !== 'result' && this.thankYouOverlay) {
+      this.thankYouOverlay.classList.remove('show');
+    }
   }
 
   // Update Live Lobby Status
@@ -161,7 +192,7 @@ class UIRenderer {
   }
 
   // Round Intro Overlay Announcement
-  showRoundAnnouncement(roundNum, title, description) {
+  showRoundAnnouncement(badgeText, title, description) {
     let overlay = document.getElementById('round-intro-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
@@ -171,7 +202,7 @@ class UIRenderer {
     }
     overlay.innerHTML = `
       <div class="round-intro-card">
-        <div class="round-intro-badge">STAGE ${roundNum} OF 3</div>
+        <div class="round-intro-badge">${badgeText}</div>
         <h2 class="round-intro-title">${title}</h2>
         <p class="round-intro-desc">${description}</p>
         <div class="round-intro-bar"></div>
@@ -180,12 +211,11 @@ class UIRenderer {
     overlay.classList.add('is-active');
     setTimeout(() => {
       overlay.classList.remove('is-active');
-    }, 1400);
+    }, 1300);
   }
 
   // Update HUD
   updateHUD(state) {
-    if (this.hudRound) this.hudRound.textContent = `${state.round}/${state.totalRounds}`;
     if (this.hudPlayerName) this.hudPlayerName.textContent = state.playerName || 'Player';
     
     if (this.hudScore) {
@@ -196,12 +226,12 @@ class UIRenderer {
     }
 
     if (this.roundPairsLeft) {
-      if (state.round === 1) {
+      if (state.round <= 3) {
         const pairsLeft = Math.max(0, 3 - state.matchesThisRound);
         this.roundPairsLeft.textContent = `${pairsLeft} pair${pairsLeft === 1 ? '' : 's'} left`;
-      } else if (state.round === 2) {
+      } else if (state.round <= 6) {
         this.roundPairsLeft.textContent = `Jigsaw Puzzle`;
-      } else if (state.round === 3) {
+      } else {
         this.roundPairsLeft.textContent = `15-Slider Puzzle`;
       }
     }
@@ -296,6 +326,80 @@ class UIRenderer {
     }, 700);
   }
 
+  // Render Stage Intermission Screen
+  renderIntermission(stageNumber, state, nextStageName, liveRank = null) {
+    this.stopTimer();
+
+    if (this.intermissionPlayerName) {
+      this.intermissionPlayerName.textContent = state.playerName || 'Player';
+    }
+
+    if (this.intermissionStageBadge) {
+      this.intermissionStageBadge.textContent = `🎉 STAGE ${stageNumber} CLEARED!`;
+    }
+
+    if (this.intermissionTitle) {
+      if (stageNumber === 1) {
+        this.intermissionTitle.textContent = 'MEMORY MATCH COMPLETE';
+      } else if (stageNumber === 2) {
+        this.intermissionTitle.textContent = 'JIGSAW PUZZLE COMPLETE';
+      } else {
+        this.intermissionTitle.textContent = 'STAGE COMPLETE';
+      }
+    }
+
+    // Cumulative score
+    if (this.intermissionTotalScore) {
+      this.animateScoreRoll(this.intermissionTotalScore, state.score || 0);
+    }
+
+    // Live Rank
+    if (this.intermissionLiveRank) {
+      if (liveRank) {
+        this.intermissionLiveRank.textContent = `Live Rank: #${liveRank}`;
+        this.intermissionLiveRank.classList.remove('hidden');
+      } else if (state.serverRank) {
+        this.intermissionLiveRank.textContent = `Live Rank: #${state.serverRank}`;
+        this.intermissionLiveRank.classList.remove('hidden');
+      } else {
+        this.intermissionLiveRank.textContent = `Rank Synced Live`;
+      }
+    }
+
+    // Stage breakdown
+    const stageDurationSec = Math.max(1, Math.round((Date.now() - (state.stageStartTime || state.gameStartTime)) / 1000));
+    if (this.intermissionStageTime) {
+      this.intermissionStageTime.textContent = `${stageDurationSec}s`;
+    }
+
+    if (this.intermissionStageMatches) {
+      this.intermissionStageMatches.textContent = stageNumber === 1 ? '9 / 9 Pairs' : (stageNumber === 2 ? '36 Pieces' : `${state.totalMatches}`);
+    }
+
+    let stageSpeedBonus = 0;
+    if (Array.isArray(state.roundBreakdown)) {
+      state.roundBreakdown.forEach(rb => {
+        if (!rb.stage || rb.stage === stageNumber) {
+          stageSpeedBonus += (rb.speedBonus || 0);
+        }
+      });
+    }
+    if (this.intermissionSpeedBonus) {
+      this.intermissionSpeedBonus.textContent = `+${stageSpeedBonus}`;
+    }
+
+    if (this.intermissionStreakVal) {
+      this.intermissionStreakVal.textContent = state.streak > 1 ? `🔥 ${state.streak}x Active` : 'Ready';
+    }
+
+    // Pulsing Next Stage Pill
+    const nextRoundNum = stageNumber + 1;
+    const targetNextName = nextStageName || (nextRoundNum === 2 ? 'Jigsaw Puzzle' : '15-Puzzle Slider');
+    if (this.intermissionBroadcastText) {
+      this.intermissionBroadcastText.innerHTML = `⏳ <strong>Waiting for host to launch Round ${nextRoundNum}: ${targetNextName}...</strong>`;
+    }
+  }
+
   // Render Result Screen
   renderResult(state, serverResult) {
     this.stopTimer();
@@ -329,6 +433,15 @@ class UIRenderer {
 
     // Trigger Confetti Celebration
     this.launchConfetti();
+
+    // Show Thank You Overlay after a brief delay if all rounds are completed
+    if (state.round >= state.totalRounds) {
+      setTimeout(() => {
+        if (this.thankYouOverlay) {
+          this.thankYouOverlay.classList.add('show');
+        }
+      }, 2000);
+    }
   }
 
   animateScoreRoll(element, targetValue) {

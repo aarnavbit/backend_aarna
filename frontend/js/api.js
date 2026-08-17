@@ -39,7 +39,7 @@ class ApiClient {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const error = new Error(data.error || data.message || `HTTP ${response.status}`);
+        const error = new Error(data.detail || data.error || data.message || `HTTP ${response.status}`);
         error.status = response.status;
         error.data = data;
         throw error;
@@ -61,36 +61,48 @@ class ApiClient {
     }
   }
 
-  // Get game status
-  async getStatus() {
-    return this.request('/api/games/status', {
-      method: 'GET'
-    });
-  }
-
   // Start game session
   async startGame(playerName) {
-    return this.request('/api/games/start', {
+    return this.request('/api/game/start', {
       method: 'POST',
-      body: JSON.stringify({ playerName, name: playerName })
+      body: JSON.stringify({
+        playerName,
+        player_name: playerName
+      })
     });
   }
 
   // Submit final score
   async submitScore({ sessionId, playerName, actions }) {
-    return this.request('/api/games/score', {
+    const act = actions || {};
+    return this.request('/api/game/score', {
       method: 'POST',
       body: JSON.stringify({
         sessionId,
+        session_id: sessionId,
         playerName,
-        actions
+        player_name: playerName,
+        matches: act.matches || 0,
+        mismatches: act.mismatches || 0,
+        roundsCompleted: act.roundsCompleted || 3,
+        rounds_completed: act.roundsCompleted || 3,
+        durationMs: act.durationMs || 0,
+        duration_ms: act.durationMs || 0,
+        actions: act
       })
     });
   }
 
   // Get live leaderboard
   async getLeaderboard(limit = 20) {
-    return this.request(`/api/games/leaderboard?limit=${limit}`, {
+    return this.request(`/api/game/leaderboard?limit=${limit}`, {
+      method: 'GET'
+    });
+  }
+
+  // Get game state status
+  async getStatus() {
+    return this.request('/api/game/status', {
       method: 'GET'
     });
   }

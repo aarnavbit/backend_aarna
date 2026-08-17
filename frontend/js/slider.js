@@ -93,10 +93,26 @@ class SliderEngine {
   }
 
   /**
+   * Updates background image asset for all tiles.
+   */
+  setImage(imgSrc) {
+    if (!imgSrc) return;
+    this.imgSrc = imgSrc;
+    if (this.tileElements) {
+      this.tileElements.forEach(tile => {
+        tile.style.backgroundImage = `url('${imgSrc}')`;
+      });
+    }
+  }
+
+  /**
    * Starts a new puzzle game session.
    */
-  startPuzzle(roundNum, onComplete) {
+  startPuzzle(roundNum, onComplete, imgSrc = null) {
     this.onComplete = onComplete;
+    if (imgSrc) {
+      this.setImage(imgSrc);
+    }
     this.resetGame();
   }
 

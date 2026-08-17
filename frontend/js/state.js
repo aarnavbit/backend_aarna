@@ -9,13 +9,15 @@ class StateStore {
   }
 
   reset() {
-    this.currentScreen = 'start'; // 'start' | 'game' | 'result' | 'leaderboard'
+    this.currentScreen = 'start'; // 'start' | 'game' | 'intermission' | 'result' | 'leaderboard'
     this.sessionId = null;
     this.playerName = '';
 
-    // Game runtime
-    this.round = 1;
-    this.totalRounds = 3;
+    // Stage and Sub-Round Tracking (3 Stages x 3 Sub-Rounds = 9 Total Sub-Rounds)
+    this.stage = 1; // 1: Cards | 2: Jigsaw | 3: Slider
+    this.subRound = 1; // 1, 2, 3 within current stage
+    this.round = 1; // 1 to 9 global sub-round index
+    this.totalRounds = 9;
     this.score = 0;
     this.streak = 0;
     this.isLocked = false;
@@ -27,8 +29,9 @@ class StateStore {
     // Timing & Statistics
     this.gameStartTime = 0;
     this.gameEndTime = 0;
+    this.stageStartTime = 0;
     this.roundStartTime = 0;
-    this.roundBreakdown = []; // Array of { roundNumber, durationMs, matches, mismatches }
+    this.roundBreakdown = []; // Array of { roundNumber, stage, subRound, durationMs, matches, mismatches, roundBonus, speedBonus }
     this.matchesThisRound = 0;
     this.totalMatches = 0;
     this.totalMismatches = 0;

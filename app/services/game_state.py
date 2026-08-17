@@ -21,11 +21,14 @@ class GlobalGameState:
         self.end_time = None
         self.connected_clients = 0
 
-    def start_round(self):
+    def start_round(self, round_number: int = None):
         with self._lock:
             self.status = 'playing'
             self.round_id = str(uuid.uuid4())
-            self.round_number += 1
+            if round_number is not None and int(round_number) > 0:
+                self.round_number = int(round_number)
+            else:
+                self.round_number += 1
             self.start_time = int(time.time() * 1000)
             self.end_time = None
             return self.get_state()

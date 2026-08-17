@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base href="/flipcard/">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FlipMatch — Admin Console & Live Event Control</title>
@@ -68,8 +69,14 @@
           </div>
 
           <div class="live-action-buttons">
-            <button id="btn-admin-start-game" class="btn btn-primary btn-glow btn-action">
-              <span>▶️ START GAME ROUND (BROADCAST)</span>
+            <button id="btn-admin-start-r1" class="btn btn-primary btn-glow btn-action" style="background:#16a34a;">
+              <span>▶️ START ROUND 1: CARDS (BROADCAST)</span>
+            </button>
+            <button id="btn-admin-start-r2" class="btn btn-primary btn-glow btn-action" style="background:#0284c7;">
+              <span>▶️ START ROUND 2: JIGSAW (BROADCAST)</span>
+            </button>
+            <button id="btn-admin-start-r3" class="btn btn-primary btn-glow btn-action" style="background:#7c3aed;">
+              <span>▶️ START ROUND 3: SLIDER (BROADCAST)</span>
             </button>
             <button id="btn-admin-stop-game" class="btn btn-danger btn-action" disabled>
               <span>🛑 END CURRENT ROUND</span>

@@ -83,10 +83,6 @@
     <section id="screen-game" class="screen screen-hidden">
       <!-- Top HUD Header -->
       <header class="game-hud glass-bar">
-        <div class="hud-item hud-round">
-          <span class="hud-label">ROUND</span>
-          <span id="hud-round-text" class="hud-value highlight-accent">1/3</span>
-        </div>
         <div class="hud-item hud-score">
           <span class="hud-label">SCORE</span>
           <span id="hud-score-text" class="hud-value">0</span>
@@ -136,7 +132,60 @@
       </footer>
     </section>
 
-    <!-- Screen 3: Result Screen -->
+    <!-- Screen 3: Intermission Screen (Between Stages) -->
+    <section id="screen-intermission" class="screen screen-hidden">
+      <div class="glass-card intermission-card">
+        <div class="intermission-header">
+          <div class="stage-clear-badge" id="intermission-stage-badge">🎉 STAGE 1 CLEARED!</div>
+          <h2 class="intermission-title" id="intermission-title">MEMORY MATCH COMPLETE</h2>
+          <p class="intermission-player">Awesome work, <span id="intermission-player-name" class="highlight-text">Player</span>!</p>
+        </div>
+
+        <div class="score-display-box">
+          <span class="score-caption">CURRENT CUMULATIVE SCORE</span>
+          <div id="intermission-total-score" class="score-number-big">0</div>
+          <div id="intermission-live-rank" class="rank-badge">Live Rank: #1</div>
+        </div>
+
+        <!-- Stage Summary Breakdown -->
+        <div class="stats-breakdown">
+          <div class="stat-row">
+            <span class="stat-name">⏱️ Stage Time</span>
+            <span id="intermission-stage-time" class="stat-val">0s</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">🎯 Total Solved</span>
+            <span id="intermission-stage-matches" class="stat-val">9</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">⚡ Speed Bonus</span>
+            <span id="intermission-speed-bonus" class="stat-val">+0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">🔥 Current Streak</span>
+            <span id="intermission-streak-val" class="stat-val">Active</span>
+          </div>
+        </div>
+
+        <!-- Pulsing Status Pill waiting for host broadcast -->
+        <div class="intermission-broadcast-pill" id="intermission-broadcast-pill">
+          <span class="pulse-indicator-dot"></span>
+          <span id="intermission-broadcast-text">⏳ Waiting for host to launch Round 2: Jigsaw Puzzle...</span>
+        </div>
+
+        <p class="intermission-hint">
+          Keep this screen open! When the host broadcasts the next stage, it will launch automatically.
+        </p>
+
+        <div class="intermission-actions">
+          <button id="btn-intermission-leaderboard" class="btn btn-secondary">
+            🏆 View Live Leaderboard
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 4: Grand Champion Victory / Result Screen -->
     <section id="screen-result" class="screen screen-hidden">
       <div class="glass-card result-card">
         <div class="result-header">

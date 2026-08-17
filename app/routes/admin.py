@@ -9,9 +9,10 @@ from app.config import settings
 from app.database import get_db
 from app.models.session import GameSession
 from app.models.leaderboard import LeaderboardEntry
-from app.schemas.game import AdminLoginRequest
+from app.schemas.game import AdminLoginRequest, AdminStartGameRequest
 from app.services.game_state import game_state
 from app.socketio_app import broadcast_game_started, broadcast_game_ended, broadcast_lobby_reset
+from typing import Optional
 
 router = APIRouter()
 
@@ -30,8 +31,14 @@ def login(req: AdminLoginRequest):
     raise HTTPException(status_code=401, detail="Invalid admin password")
 
 @router.post("/game/start", dependencies=[Depends(verify_admin)])
-async def admin_start_game():
-    state = game_state.start_round()
+async def admin_start_game(req: Optional[AdminStartGameRequest] = None, round_number: Optional[int] = None):
+    target_round = None
+    if req:
+        target_round = req.roundNumber or req.round_number
+    if target_round is None:
+        target_round = round_number
+        
+    state = game_state.start_round(round_number=target_round)
     await broadcast_game_started()
     return {
         "success": True,

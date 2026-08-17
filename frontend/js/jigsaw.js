@@ -32,8 +32,11 @@ class JigsawEngine {
     });
   }
 
-  startPuzzle(roundNum, onComplete) {
+  startPuzzle(roundNum, onComplete, imgSrc = null) {
     this.onComplete = onComplete;
+    if (imgSrc) {
+      this.imgSrc = imgSrc;
+    }
     this.pieces = [];
     this.slots = [];
     this.tray = [];
@@ -44,19 +47,16 @@ class JigsawEngine {
       this.initGame();
     };
 
-    if (this.img.complete && this.img.naturalWidth > 0) {
-      onImageReady();
-    } else {
-      this.img.onload = onImageReady;
-      this.img.onerror = () => {
-        if (this.imgSrc !== 'images/Logo.png') {
-          this.imgSrc = 'images/Logo.png';
-          this.img.src = 'images/Logo.png';
-          this.img.onload = onImageReady;
-        }
-      };
-      this.img.src = this.imgSrc;
-    }
+    this.img = new Image();
+    this.img.onload = onImageReady;
+    this.img.onerror = () => {
+      if (this.imgSrc !== 'images/Logo.png') {
+        this.imgSrc = 'images/Logo.png';
+        this.img.src = 'images/Logo.png';
+        this.img.onload = onImageReady;
+      }
+    };
+    this.img.src = this.imgSrc;
   }
 
   initGame() {

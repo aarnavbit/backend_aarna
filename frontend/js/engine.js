@@ -34,11 +34,14 @@ class GameEngine {
       ? imagePool
       : defaultPool;
 
-    // 1. Pick unique items from pool
-    const shuffledPool = this.shuffle(pool);
-    const selectedItems = shuffledPool.slice(0, pairsCount);
+    // Pick fresh cards per round so players see new cards each stage
+    const startIndex = ((roundNumber - 1) * pairsCount) % pool.length;
+    let selectedItems = [];
+    for (let i = 0; i < pairsCount; i++) {
+      selectedItems.push(pool[(startIndex + i) % pool.length]);
+    }
 
-    // 2. Create duplicate pairs with unique card IDs
+    // Create duplicate pairs with unique card IDs
     const deck = [];
     selectedItems.forEach((item, index) => {
       deck.push({
@@ -57,7 +60,7 @@ class GameEngine {
       });
     });
 
-    // 3. Shuffle cards thoroughly
+    // Shuffle cards thoroughly
     return this.shuffle(deck);
   }
 

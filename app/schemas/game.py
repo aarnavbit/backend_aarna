@@ -24,3 +24,7 @@ class GameScoreRequest(BaseModel):
 
 class AdminLoginRequest(BaseModel):
     password: str
+
+class AdminStartGameRequest(BaseModel):
+    round_number: Optional[int] = None
+    roundNumber: Optional[int] = None
