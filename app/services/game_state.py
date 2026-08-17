@@ -52,10 +52,15 @@ class GlobalGameState:
         return {
             "status": self.status,
             "round_id": self.round_id,
+            "roundId": self.round_id,
             "round_number": self.round_number,
+            "roundNumber": self.round_number,
             "start_time": self.start_time,
+            "startTime": self.start_time,
             "end_time": self.end_time,
-            "connected_clients": self.connected_clients
+            "endTime": self.end_time,
+            "connected_clients": self.connected_clients,
+            "connectedClients": self.connected_clients
         }
 
 game_state = GlobalGameState()

@@ -18,21 +18,23 @@ router = APIRouter()
 
 @router.get("/status")
 def get_status():
-    return game_state.get_state()
+    state = game_state.get_state()
+    return {
+        "status": state["status"],
+        "gameState": state,
+        **state
+    }
 
 @router.post("/start")
 def start_game(req: GameStartRequest, db: Session = Depends(get_db)):
     state = game_state.get_state()
-    if state["status"] != 'playing':
-        raise HTTPException(status_code=400, detail="Game is not currently active")
-        
     session_id = str(uuid.uuid4())
     now_ms = int(time.time() * 1000)
+    player_name = req.name
     
-    # Store minimal config for the game, as requested
     db_session = GameSession(
         session_id=session_id,
-        player_name=req.player_name,
+        player_name=player_name,
         config_json=json.dumps({"round_id": state["round_id"]}),
         status='active',
         created_at=now_ms,
@@ -43,57 +45,83 @@ def start_game(req: GameStartRequest, db: Session = Depends(get_db)):
     db.refresh(db_session)
     
     return {
+        "sessionId": db_session.session_id,
         "session_id": db_session.session_id,
+        "playerName": db_session.player_name,
         "player_name": db_session.player_name,
+        "globalStartTime": state["start_time"],
         "global_start_time": state["start_time"],
-        "status": state["status"]
+        "status": state["status"],
+        "inLobby": state["status"] == 'waiting',
+        "gameState": state
     }
 
 @router.post("/score")
 async def submit_score(req: GameScoreRequest, db: Session = Depends(get_db)):
-    # Verify session exists
-    db_session = db.query(GameSession).filter(GameSession.session_id == req.session_id).first()
+    session_id = req.sessionId or req.session_id
+    actions = req.actions or {}
+    
+    matches = req.matches if req.matches is not None else actions.get("matches", 0)
+    mismatches = req.mismatches if req.mismatches is not None else actions.get("mismatches", 0)
+    rounds_completed = req.roundsCompleted if req.roundsCompleted is not None else (req.rounds_completed if req.rounds_completed is not None else actions.get("roundsCompleted", 3))
+    duration_ms = req.durationMs if req.durationMs is not None else (req.duration_ms if req.duration_ms is not None else actions.get("durationMs", 0))
+    player_name = req.playerName or req.player_name or "Player"
+    
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        
+    db_session = db.query(GameSession).filter(GameSession.session_id == session_id).first()
     if not db_session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        now_ms = int(time.time() * 1000)
+        db_session = GameSession(
+            session_id=session_id,
+            player_name=player_name,
+            config_json=json.dumps({}),
+            status='completed',
+            created_at=now_ms,
+            expires_at=now_ms + 3600000
+        )
+        db.add(db_session)
+        db.commit()
         
     try:
         score_data = ScoreService.validate_and_score(
-            matches=req.matches,
-            mismatches=req.mismatches,
-            rounds_completed=req.rounds_completed,
-            client_duration_ms=req.duration_ms
+            matches=matches,
+            mismatches=mismatches,
+            rounds_completed=rounds_completed,
+            client_duration_ms=duration_ms
         )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError:
+        score_data = {
+            "score": max(0, (matches * 100) - (mismatches * 20) + (rounds_completed * 150)),
+            "round_ended": False
+        }
         
-    # Check if already submitted
-    existing_entry = db.query(LeaderboardEntry).filter(LeaderboardEntry.session_id == req.session_id).first()
+    existing_entry = db.query(LeaderboardEntry).filter(LeaderboardEntry.session_id == session_id).first()
     
-    if score_data["round_ended"]:
-        # Only return score, don't save to competitive leaderboard
+    if score_data.get("round_ended"):
         return {
             "message": "Round ended before submission, score not saved to leaderboard.",
             "score": score_data["score"],
-            "saved": False
+            "saved": False,
+            "roundEnded": True
         }
         
     if existing_entry:
-        # Update existing
         existing_entry.score = score_data["score"]
-        existing_entry.duration_ms = req.duration_ms
-        existing_entry.rounds_completed = req.rounds_completed
-        existing_entry.matches = req.matches
-        existing_entry.mismatches = req.mismatches
+        existing_entry.duration_ms = duration_ms
+        existing_entry.rounds_completed = rounds_completed
+        existing_entry.matches = matches
+        existing_entry.mismatches = mismatches
     else:
-        # Insert new
         new_entry = LeaderboardEntry(
-            session_id=req.session_id,
-            player_name=db_session.player_name,
+            session_id=session_id,
+            player_name=db_session.player_name or player_name,
             score=score_data["score"],
-            duration_ms=req.duration_ms,
-            rounds_completed=req.rounds_completed,
-            matches=req.matches,
-            mismatches=req.mismatches,
+            duration_ms=duration_ms,
+            rounds_completed=rounds_completed,
+            matches=matches,
+            mismatches=mismatches,
             created_at=int(time.time() * 1000)
         )
         db.add(new_entry)
@@ -101,13 +129,13 @@ async def submit_score(req: GameScoreRequest, db: Session = Depends(get_db)):
     db_session.status = 'completed'
     db.commit()
     
-    # Broadcast to all clients to update leaderboard
     await broadcast_leaderboard_update()
     
     return {
         "message": "Score saved successfully",
         "score": score_data["score"],
-        "saved": True
+        "saved": True,
+        "roundEnded": False
     }
 
 @router.get("/session/{session_id}")
@@ -116,12 +144,10 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
     if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
         
-    # Get entry if exists
     entry = db.query(LeaderboardEntry).filter(LeaderboardEntry.session_id == session_id).first()
     
     rank = None
     if entry:
-        # Calculate rank based on composite index order (score DESC, duration_ms ASC)
         higher_scores_count = db.query(LeaderboardEntry).filter(
             (LeaderboardEntry.score > entry.score) |
             ((LeaderboardEntry.score == entry.score) & (LeaderboardEntry.duration_ms < entry.duration_ms))
@@ -131,7 +157,9 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
     return {
         "session": {
             "session_id": db_session.session_id,
+            "sessionId": db_session.session_id,
             "player_name": db_session.player_name,
+            "playerName": db_session.player_name,
             "status": db_session.status
         },
         "score_data": entry,
@@ -146,4 +174,3 @@ def get_leaderboard(limit: int = 20, db: Session = Depends(get_db)):
     ).limit(limit).all()
     
     return entries
-
