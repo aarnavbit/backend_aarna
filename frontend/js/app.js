@@ -172,9 +172,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. Round Gameplay Management
   // ------------------------------------------------------------------------
   function startRound(roundNum) {
-    if (currentGameState.roundNumber === 2) {
+    if (currentGameState.roundNumber === 3 || roundNum === 3) {
+      // Round 3: 15-Puzzle Image Slider Mode
+      if (UI.cardGrid) UI.cardGrid.classList.add('hidden');
+      const jigsawBoard = document.getElementById('jigsaw-board');
+      if (jigsawBoard) jigsawBoard.classList.add('hidden');
+      const sliderBoard = document.getElementById('slider-board');
+      if (sliderBoard) sliderBoard.classList.remove('hidden');
+
+      if (!window.sliderGame) {
+        window.sliderGame = new SliderEngine('slider-board', 'images/Logo.png');
+      }
+      
+      AppState.startRound(roundNum, []);
+      window.sliderGame.startPuzzle(roundNum, (moves) => {
+        // Sub-round complete
+        const roundDurationMs = Date.now() - AppState.roundStartTime;
+        const bonus = engine.calculateRoundBonus(roundDurationMs);
+        AppState.matchesThisRound = GameConfig.pairsPerRound || 3;
+        AppState.totalMatches += AppState.matchesThisRound;
+        AppState.recordRoundCompletion(bonus.roundBonus, bonus.speedBonus, roundDurationMs);
+
+        setTimeout(() => {
+          if (AppState.round < GameConfig.totalRounds) {
+            startRound(AppState.round + 1);
+          } else {
+            handleGameEnd();
+          }
+        }, 1500);
+      });
+      return;
+    }
+
+    if (currentGameState.roundNumber === 2 || roundNum === 2) {
       // Round 2: Jigsaw Puzzle Mode
       if (UI.cardGrid) UI.cardGrid.classList.add('hidden');
+      const sliderBoard = document.getElementById('slider-board');
+      if (sliderBoard) sliderBoard.classList.add('hidden');
       const jigsawBoard = document.getElementById('jigsaw-board');
       if (jigsawBoard) jigsawBoard.classList.remove('hidden');
 
@@ -205,6 +239,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Default: Flipcard Mode
     const jigsawBoard = document.getElementById('jigsaw-board');
     if (jigsawBoard) jigsawBoard.classList.add('hidden');
+    const sliderBoard = document.getElementById('slider-board');
+    if (sliderBoard) sliderBoard.classList.add('hidden');
     if (UI.cardGrid) UI.cardGrid.classList.remove('hidden');
 
     const deck = engine.generateRoundDeck(
