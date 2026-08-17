@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnPlayGame.addEventListener('click', () => {
-    window.open('/flipcard', '_blank');
+    window.open('/games', '_blank');
   });
 
   btnRefresh.addEventListener('click', loadDashboardData);

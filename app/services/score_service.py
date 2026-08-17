@@ -2,17 +2,19 @@ import time
 from app.services.game_state import game_state
 
 class ScoreService:
-    POINTS_PER_MATCH = 10
-    ROUND_BONUS = 50
-    MISMATCH_PENALTY = 5
+    POINTS_PER_MATCH = 100
+    ROUND_BONUS = 150
+    MISMATCH_PENALTY = 20
+    MAX_SPEED_BONUS = 100
 
     @classmethod
     def calculate_score(cls, matches: int, mismatches: int, rounds_completed: int, duration_ms: int) -> int:
         base_score = (matches * cls.POINTS_PER_MATCH) + (rounds_completed * cls.ROUND_BONUS)
         penalty = mismatches * cls.MISMATCH_PENALTY
         
-        # Simple speed bonus: faster gives more points, up to 100 bonus points max
-        speed_bonus = max(0, 100 - (duration_ms // 1000))
+        # Simple speed bonus: faster gives more points, up to 100 bonus points max per round completed
+        max_bonus = cls.MAX_SPEED_BONUS * max(1, rounds_completed)
+        speed_bonus = max(0, max_bonus - ((duration_ms // 1000) * 5))
         
         total = base_score + speed_bonus - penalty
         return max(0, total)

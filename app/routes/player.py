@@ -93,7 +93,7 @@ async def submit_score(req: GameScoreRequest, db: Session = Depends(get_db)):
         )
     except ValueError:
         score_data = {
-            "score": max(0, (matches * 100) - (mismatches * 20) + (rounds_completed * 150)),
+            "score": ScoreService.calculate_score(matches, mismatches, rounds_completed, duration_ms),
             "round_ended": False
         }
         

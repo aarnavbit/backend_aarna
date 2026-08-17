@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Fetch initial game status on load
-  Api.request('/api/game/status').then(res => {
+  Api.getStatus().then(res => {
     if (res && res.gameState) {
       currentGameState = res.gameState;
       UI.updateLobbyStatus(res.gameState);

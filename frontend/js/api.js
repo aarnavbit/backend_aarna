@@ -61,17 +61,24 @@ class ApiClient {
     }
   }
 
+  // Get game status
+  async getStatus() {
+    return this.request('/api/games/status', {
+      method: 'GET'
+    });
+  }
+
   // Start game session
   async startGame(playerName) {
-    return this.request('/api/game/start', {
+    return this.request('/api/games/start', {
       method: 'POST',
-      body: JSON.stringify({ playerName })
+      body: JSON.stringify({ playerName, name: playerName })
     });
   }
 
   // Submit final score
   async submitScore({ sessionId, playerName, actions }) {
-    return this.request('/api/game/score', {
+    return this.request('/api/games/score', {
       method: 'POST',
       body: JSON.stringify({
         sessionId,
@@ -83,7 +90,7 @@ class ApiClient {
 
   // Get live leaderboard
   async getLeaderboard(limit = 20) {
-    return this.request(`/api/leaderboard?limit=${limit}`, {
+    return this.request(`/api/games/leaderboard?limit=${limit}`, {
       method: 'GET'
     });
   }
