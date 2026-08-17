@@ -148,11 +148,11 @@ def get_session(session_id: str, db: Session = Depends(get_db)):
     
     rank = None
     if entry:
-        higher_scores_count = db.query(LeaderboardEntry).filter(
-            (LeaderboardEntry.score > entry.score) |
-            ((LeaderboardEntry.score == entry.score) & (LeaderboardEntry.duration_ms < entry.duration_ms))
+        faster_count = db.query(LeaderboardEntry).filter(
+            (LeaderboardEntry.duration_ms < entry.duration_ms) |
+            ((LeaderboardEntry.duration_ms == entry.duration_ms) & (LeaderboardEntry.score > entry.score))
         ).count()
-        rank = higher_scores_count + 1
+        rank = faster_count + 1
         
     return {
         "session": {
@@ -183,8 +183,8 @@ def get_leaderboard(limit: int = 20, db: Session = Depends(get_db)):
     ).group_by(
         func.lower(func.trim(LeaderboardEntry.player_name))
     ).order_by(
-        desc("score"),
-        "duration_ms"
+        "duration_ms",
+        desc("score")
     ).limit(limit).all()
     
     results = []

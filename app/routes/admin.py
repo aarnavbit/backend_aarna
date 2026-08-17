@@ -71,8 +71,8 @@ def admin_get_scores(db: Session = Depends(get_db)):
     ).group_by(
         func.lower(func.trim(LeaderboardEntry.player_name))
     ).order_by(
-        desc("score"),
-        "duration_ms"
+        "duration_ms",
+        desc("score")
     ).all()
     
     total_unique_players = len(grouped)
@@ -128,8 +128,8 @@ def export_csv(db: Session = Depends(get_db)):
     ).group_by(
         func.lower(func.trim(LeaderboardEntry.player_name))
     ).order_by(
-        desc("score"),
-        "duration_ms"
+        "duration_ms",
+        desc("score")
     ).all()
     
     output = io.StringIO()
