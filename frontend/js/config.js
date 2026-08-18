@@ -32,8 +32,12 @@ function resolveApiBaseUrl() {
     return 'http://localhost:8000';
   }
 
-  // 4. Production backend default
-  return 'https://backend-aarna.onrender.com';
+  // 4. Dynamic origin fallback
+  if (typeof window !== 'undefined' && window.location && window.location.origin && !window.location.origin.includes('file://')) {
+    return window.location.origin.replace(/\/+$/, '');
+  }
+
+  return 'http://localhost:8000';
 }
 
 const GameConfig = {

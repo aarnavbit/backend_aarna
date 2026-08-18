@@ -73,8 +73,16 @@ class ApiClient {
   }
 
   // Submit final score
-  async submitScore({ sessionId, playerName, actions }) {
-    const act = actions || {};
+  async submitScore(payload) {
+    const p = payload || {};
+    const act = p.actions || {};
+    const sessionId = p.sessionId || p.session_id || act.sessionId || act.session_id;
+    const playerName = p.playerName || p.player_name || act.playerName || act.player_name;
+    const matches = p.matches !== undefined ? p.matches : (act.matches !== undefined ? act.matches : 0);
+    const mismatches = p.mismatches !== undefined ? p.mismatches : (act.mismatches !== undefined ? act.mismatches : 0);
+    const roundsCompleted = p.roundsCompleted !== undefined ? p.roundsCompleted : (p.rounds_completed !== undefined ? p.rounds_completed : (act.roundsCompleted !== undefined ? act.roundsCompleted : 3));
+    const durationMs = p.durationMs !== undefined ? p.durationMs : (p.duration_ms !== undefined ? p.duration_ms : (act.durationMs !== undefined ? act.durationMs : 0));
+
     return this.request('/api/game/score', {
       method: 'POST',
       body: JSON.stringify({
@@ -82,12 +90,12 @@ class ApiClient {
         session_id: sessionId,
         playerName,
         player_name: playerName,
-        matches: act.matches || 0,
-        mismatches: act.mismatches || 0,
-        roundsCompleted: act.roundsCompleted || 3,
-        rounds_completed: act.roundsCompleted || 3,
-        durationMs: act.durationMs || 0,
-        duration_ms: act.durationMs || 0,
+        matches,
+        mismatches,
+        roundsCompleted,
+        rounds_completed: roundsCompleted,
+        durationMs,
+        duration_ms: durationMs,
         actions: act
       })
     });

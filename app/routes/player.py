@@ -66,6 +66,7 @@ async def submit_score(req: GameScoreRequest, db: Session = Depends(get_db)):
     rounds_completed = req.roundsCompleted if req.roundsCompleted is not None else (req.rounds_completed if req.rounds_completed is not None else actions.get("roundsCompleted", 3))
     duration_ms = req.durationMs if req.durationMs is not None else (req.duration_ms if req.duration_ms is not None else actions.get("durationMs", 0))
     player_name = req.playerName or req.player_name or "Player"
+    is_early_submit = actions.get("is_early_submit", False) if isinstance(actions, dict) else False
     
     if not session_id:
         session_id = str(uuid.uuid4())
@@ -130,11 +131,18 @@ async def submit_score(req: GameScoreRequest, db: Session = Depends(get_db)):
     db_session.status = 'completed'
     db.commit()
     
+    higher_score_count = db.query(LeaderboardEntry).filter(
+        (LeaderboardEntry.score > score_data["score"]) |
+        ((LeaderboardEntry.score == score_data["score"]) & (LeaderboardEntry.duration_ms < duration_ms))
+    ).count()
+    rank = higher_score_count + 1
+    
     await broadcast_leaderboard_update()
     
     return {
         "message": "Score saved successfully",
         "score": score_data["score"],
+        "rank": rank,
         "saved": True,
         "roundEnded": False
     }

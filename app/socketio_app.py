@@ -15,6 +15,7 @@ async def connect(sid, environ):
     await sio.emit('game_state', game_state.get_state(), to=sid)
     # Broadcast updated client count to all
     await sio.emit('game_state', game_state.get_state())
+    await sio.emit('connected_clients', {'count': active_connections})
 
 @sio.event
 async def disconnect(sid):
@@ -22,6 +23,7 @@ async def disconnect(sid):
     active_connections -= 1
     game_state.set_connected_clients(active_connections)
     await sio.emit('game_state', game_state.get_state())
+    await sio.emit('connected_clients', {'count': active_connections})
 
 async def broadcast_game_started():
     await sio.emit('game_started', game_state.get_state())

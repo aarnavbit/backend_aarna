@@ -459,10 +459,18 @@ class UIRenderer {
 
   // Render Leaderboard Screen
   renderLeaderboard(data, currentPlayerSessionId, isOffline = false) {
-    this.offlineBadge.classList.toggle('hidden', !isOffline);
+    if (this.offlineBadge) this.offlineBadge.classList.toggle('hidden', !isOffline);
+    if (!this.leaderboardList) return;
     this.leaderboardList.innerHTML = '';
 
-    const players = data && Array.isArray(data.topPlayers) ? data.topPlayers : [];
+    const players = Array.isArray(data)
+      ? data
+      : (data && Array.isArray(data.topPlayers)
+          ? data.topPlayers
+          : (data && Array.isArray(data.entries)
+              ? data.entries
+              : (data && Array.isArray(data.players) ? data.players : [])));
+
     if (players.length === 0) {
       this.leaderboardList.innerHTML = `
         <div class="empty-leaderboard">
