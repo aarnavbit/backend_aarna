@@ -17,6 +17,19 @@ class ScoreService:
         speed_bonus = max(0, max_bonus - ((duration_ms // 1000) * 5))
         
         total = base_score + speed_bonus - penalty
+        
+        if rounds_completed < 5:
+            # Early submit penalty
+            total -= 500
+        else:
+            # Global time bonus for finishing the whole game
+            if duration_ms < 45000:
+                total += 3000
+            elif duration_ms < 75000:
+                total += 1500
+            elif duration_ms < 120000:
+                total += 500
+                
         return max(0, total)
 
     @classmethod
