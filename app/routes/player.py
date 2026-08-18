@@ -89,11 +89,12 @@ async def submit_score(req: GameScoreRequest, db: Session = Depends(get_db)):
             matches=matches,
             mismatches=mismatches,
             rounds_completed=rounds_completed,
-            client_duration_ms=duration_ms
+            client_duration_ms=duration_ms,
+            is_early_submit=is_early_submit
         )
     except ValueError:
         score_data = {
-            "score": ScoreService.calculate_score(matches, mismatches, rounds_completed, duration_ms),
+            "score": ScoreService.calculate_score(matches, mismatches, rounds_completed, duration_ms, is_early_submit),
             "round_ended": False
         }
         

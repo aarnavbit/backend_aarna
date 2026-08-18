@@ -8,7 +8,7 @@ class ScoreService:
     MAX_SPEED_BONUS = 100
 
     @classmethod
-    def calculate_score(cls, matches: int, mismatches: int, rounds_completed: int, duration_ms: int) -> int:
+    def calculate_score(cls, matches: int, mismatches: int, rounds_completed: int, duration_ms: int, is_early_submit: bool = False) -> int:
         base_score = (matches * cls.POINTS_PER_MATCH) + (rounds_completed * cls.ROUND_BONUS)
         penalty = mismatches * cls.MISMATCH_PENALTY
         
@@ -18,11 +18,11 @@ class ScoreService:
         
         total = base_score + speed_bonus - penalty
         
-        if rounds_completed < 5:
-            # Early submit penalty
+        if is_early_submit:
+            # Early submit penalty explicitly sent
             total -= 500
-        else:
-            # Global time bonus for finishing the whole game
+        elif rounds_completed >= 5:
+            # Global time bonus for finishing the whole game from start to finish
             if duration_ms < 45000:
                 total += 3000
             elif duration_ms < 75000:
@@ -33,7 +33,7 @@ class ScoreService:
         return max(0, total)
 
     @classmethod
-    def validate_and_score(cls, matches: int, mismatches: int, rounds_completed: int, client_duration_ms: int):
+    def validate_and_score(cls, matches: int, mismatches: int, rounds_completed: int, client_duration_ms: int, is_early_submit: bool = False):
         state = game_state.get_state()
         
         if state["status"] == 'waiting':
@@ -58,7 +58,7 @@ class ScoreService:
         # Late submission enforcement
         round_ended = state["status"] == 'ended'
 
-        score = cls.calculate_score(matches, mismatches, rounds_completed, client_duration_ms)
+        score = cls.calculate_score(matches, mismatches, rounds_completed, client_duration_ms, is_early_submit)
         
         return {
             "score": score,
