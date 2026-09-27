@@ -15,6 +15,15 @@ class Settings(BaseSettings):
     WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/"
     CORS_ORIGINS: Union[str, List[str]] = ["*"]
     
+    # Ishanya Event Settings
+    ISHANYA_MEMBER_COUNT: int = 3
+    ISHANYA_WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/"
+    ISHANYA_SMTP_HOST: str = "smtp.gmail.com"
+    ISHANYA_SMTP_PORT: int = 587
+    ISHANYA_SMTP_USER: str = ""
+    ISHANYA_SMTP_PASS: str = ""
+    ISHANYA_EMAIL_FROM: str = "noreply@aarna.live"
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -11,6 +11,7 @@ import app.models # Ensure all models are registered
 from app.routes.player import router as player_router
 from app.routes.admin import router as admin_router
 from app.routes.recruitment import router as recruitment_router
+from app.routes.ishanya import router as ishanya_router
 from app.services.auth import seed_super_admin
 from app.socketio_app import sio
 
@@ -41,6 +42,7 @@ app.include_router(player_router, prefix="/api/game", tags=["Flipcard Player (Le
 app.include_router(player_router, prefix="/api", tags=["Flipcard Player (Root Alias)"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Flipcard Admin"])
 app.include_router(recruitment_router, tags=["Recruitment & Portal Admin"])
+app.include_router(ishanya_router, prefix="/api/ishanya", tags=["Ishanya Event"])
 
 # Mount Socket.IO app
 app.mount("/socket.io", socketio.ASGIApp(sio))
