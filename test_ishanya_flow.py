@@ -55,12 +55,30 @@ def run_tests():
         reg_payload = {
             "team_name": "Tech Titans",
             "leader_name": "Rohit Sharma",
+            "leader_roll_no": "23BD1A0501",
+            "leader_dept": "CSE",
+            "leader_sec": "A",
             "leader_email": "rohit.titans@example.com",
             "leader_phone": "+919876543210",
+            "amount": 300,
             "members": [
-                {"name": "Virat Kohli", "phone": "+919876543211"},
-                {"name": "Jasprit Bumrah", "phone": "+919876543212"}
-            ]
+                {
+                    "name": "Virat Kohli",
+                    "roll_no": "23BD1A0502",
+                    "department": "CSE",
+                    "sec": "A",
+                    "email": "virat@example.com",
+                    "phone": "+919876543211",
+                },
+                {
+                    "name": "Jasprit Bumrah",
+                    "roll_no": "23BD1A0503",
+                    "department": "IT",
+                    "sec": "B",
+                    "email": "jasprit@example.com",
+                    "phone": "+919876543212",
+                },
+            ],
         }
         res = requests.post(f"{BASE_URL}/api/ishanya/register", json=reg_payload)
         data = res.json()
@@ -84,11 +102,14 @@ def run_tests():
             and data.get("registration_id") == reg_id
             and data.get("team_name") == "Tech Titans"
             and data.get("leader_name") == "Rohit Sharma"
+            and data.get("leader_roll_no") == "23BD1A0501"
+            and data.get("amount") == 300
             and data.get("status") == "pending"
             and len(data.get("members", [])) == 2
+            and data.get("members")[0].get("roll_no") == "23BD1A0502"
             and "whatsapp_link" not in data  # WhatsApp link must NOT show when pending
         ):
-            record_pass("Public status returns pending state, leader details, 2 members, no WhatsApp link")
+            record_pass("Public status returns pending state, leader & member details, amount ₹300, no WhatsApp link")
         else:
             record_fail("Status retrieval (pending)", f"Response: {data}")
 
@@ -122,8 +143,22 @@ def run_tests():
         print("\n--- Checkpoint 5: Member Update (While Pending) ---")
         update_payload = {
             "members": [
-                {"name": "Suryakumar Yadav", "phone": "+919876543222"},
-                {"name": "Hardik Pandya", "phone": "+919876543223"}
+                {
+                    "name": "Suryakumar Yadav",
+                    "roll_no": "23BD1A0504",
+                    "department": "CSE",
+                    "sec": "C",
+                    "email": "sky@example.com",
+                    "phone": "+919876543222",
+                },
+                {
+                    "name": "Hardik Pandya",
+                    "roll_no": "23BD1A0505",
+                    "department": "ECE",
+                    "sec": "A",
+                    "email": "hardik@example.com",
+                    "phone": "+919876543223",
+                },
             ]
         }
         res = requests.put(f"{BASE_URL}/api/ishanya/members/{reg_id}", json=update_payload)

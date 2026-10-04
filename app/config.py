@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     
     # Ishanya Event Settings
     ISHANYA_MEMBER_COUNT: int = 3
+    ISHANYA_REGISTRATION_FEE: int = 300
     ISHANYA_WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/"
     ISHANYA_SMTP_HOST: str = "smtp.gmail.com"
     ISHANYA_SMTP_PORT: int = 587

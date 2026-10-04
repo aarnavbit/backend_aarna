@@ -39,14 +39,28 @@ def _team_to_dict(team: IshanyaTeam, members: list, include_whatsapp: bool = Fal
         "registration_id": team.registration_id,
         "team_name": team.team_name,
         "leader_name": team.leader_name,
+        "leader_roll_no": getattr(team, "leader_roll_no", "") or "",
+        "leader_dept": getattr(team, "leader_dept", "") or "",
+        "leader_sec": getattr(team, "leader_sec", "") or "",
         "leader_email": team.leader_email,
         "leader_phone": team.leader_phone,
+        "amount": getattr(team, "amount", 300) or 300,
         "utr_number": team.utr_number,
         "status": team.status,
         "admin_notes": team.admin_notes,
         "created_at": team.created_at,
         "updated_at": team.updated_at,
-        "members": [{"name": m.name, "phone": m.phone} for m in members],
+        "members": [
+            {
+                "name": m.name,
+                "roll_no": getattr(m, "roll_no", "") or "",
+                "department": getattr(m, "department", "") or "",
+                "section": getattr(m, "section", "") or "",
+                "email": getattr(m, "email", "") or "",
+                "phone": m.phone,
+            }
+            for m in members
+        ],
     }
     if include_whatsapp and team.status == "accepted":
         result["whatsapp_link"] = settings.ISHANYA_WHATSAPP_GROUP_LINK
@@ -79,8 +93,12 @@ def register_team(req: IshanyaRegisterRequest, db: Session = Depends(get_db)):
             registration_id=reg_id,
             team_name=req.team_name.strip(),
             leader_name=req.leader_name.strip(),
+            leader_roll_no=(req.leader_roll_no or "").strip(),
+            leader_dept=(req.leader_dept or "").strip(),
+            leader_sec=(req.leader_sec or "").strip(),
             leader_email=req.leader_email.strip(),
             leader_phone=req.leader_phone.strip(),
+            amount=req.amount or settings.ISHANYA_REGISTRATION_FEE,
             status="pending",
             created_at=int(time.time() * 1000),
             updated_at=int(time.time() * 1000),
@@ -92,6 +110,10 @@ def register_team(req: IshanyaRegisterRequest, db: Session = Depends(get_db)):
             member = IshanyaMember(
                 team_id=team.id,
                 name=m.name.strip(),
+                roll_no=(m.roll_no or "").strip(),
+                department=(m.department or "").strip(),
+                section=(m.sec or "").strip(),
+                email=(m.email or "").strip(),
                 phone=m.phone.strip(),
                 created_at=int(time.time() * 1000),
             )
@@ -161,6 +183,10 @@ def update_members(registration_id: str, req: IshanyaMemberUpdateRequest, db: Se
         member = IshanyaMember(
             team_id=team.id,
             name=m.name.strip(),
+            roll_no=(m.roll_no or "").strip(),
+            department=(m.department or "").strip(),
+            section=(m.sec or "").strip(),
+            email=(m.email or "").strip(),
             phone=m.phone.strip(),
             created_at=int(time.time() * 1000),
         )
