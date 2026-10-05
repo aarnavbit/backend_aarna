@@ -432,11 +432,16 @@ ISHANYA_ACCEPTANCE_EMAIL_TEMPLATE = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 
 """
 
 
-def send_status_email(to: str, team_name: str, registration_id: str, status: str, whatsapp_link: str):
+def send_status_email(to: str, team_name: str, registration_id: str, status: str, whatsapp_link: str = None):
     # Only send acceptance congratulations email; never send rejection / regret emails
     if status != "accepted":
         print(f"[EMAIL] Status is '{status}'. Skipping rejection/regret email to {to} as requested.")
         return None
+
+    # Resolve official Ishanya WhatsApp group link
+    official_whatsapp_link = whatsapp_link or getattr(settings, "ISHANYA_WHATSAPP_GROUP_LINK", None) or "https://chat.whatsapp.com/DOvsMxujwYT8sN6Eyc5FKe"
+    if not official_whatsapp_link or official_whatsapp_link.strip() == "https://chat.whatsapp.com/":
+        official_whatsapp_link = "https://chat.whatsapp.com/DOvsMxujwYT8sN6Eyc5FKe"
 
     adapter = get_email_adapter()
     subject = f"🎉 Congratulations! Team {team_name} is Accepted - Ishanya '26"
@@ -444,7 +449,7 @@ def send_status_email(to: str, team_name: str, registration_id: str, status: str
         ISHANYA_ACCEPTANCE_EMAIL_TEMPLATE
         .replace("{team_name}", str(team_name or "Participant"))
         .replace("{registration_id}", str(registration_id or "N/A"))
-        .replace("{whatsapp_link}", str(whatsapp_link or settings.ISHANYA_WHATSAPP_GROUP_LINK))
+        .replace("{whatsapp_link}", official_whatsapp_link)
     )
 
     return adapter.send(to, subject, html_body)
