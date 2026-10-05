@@ -12,13 +12,13 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "aarna_recruitment_jwt_secret_key_2026"
     DEFAULT_SUPERADMIN_ROLL: str = "ADMIN001"
     DEFAULT_SUPERADMIN_PASS: str = "adminpassword123"
-    WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/"
+    WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/DOvsMxujwYT8sN6Eyc5FKe"
     CORS_ORIGINS: Union[str, List[str]] = ["*"]
     
     # Ishanya Event Settings
     ISHANYA_MEMBER_COUNT: int = 3
-    ISHANYA_REGISTRATION_FEE: int = 300
-    ISHANYA_WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/"
+    ISHANYA_REGISTRATION_FEE: int = 150
+    ISHANYA_WHATSAPP_GROUP_LINK: str = "https://chat.whatsapp.com/DOvsMxujwYT8sN6Eyc5FKe"
     ISHANYA_SMTP_HOST: str = "smtp.gmail.com"
     ISHANYA_SMTP_PORT: int = 587
     ISHANYA_SMTP_USER: str = ""
@@ -42,7 +42,9 @@ class Settings(BaseSettings):
         raw_url = self.DATABASE_URL or self.SQLALCHEMY_DATABASE_URI or os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
         if raw_url:
             if raw_url.startswith("postgres://"):
-                return raw_url.replace("postgres://", "postgresql://", 1)
+                return raw_url.replace("postgres://", "postgresql+psycopg2://", 1)
+            if raw_url.startswith("postgresql://"):
+                return raw_url.replace("postgresql://", "postgresql+psycopg2://", 1)
             return raw_url
         return f"sqlite:///{self.DB_PATH}"
 

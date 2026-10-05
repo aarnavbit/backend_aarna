@@ -64,7 +64,7 @@ def test_full_registration_suite():
             leader_sec="A",
             leader_email="aarav@test.com",
             leader_phone="9876543210",
-            amount=300,
+            amount=150,
             members=[
                 IshanyaMemberSchema(
                     name="Priya Nair",
@@ -99,7 +99,7 @@ def test_full_registration_suite():
         assert status["leader_sec"] == "A"
         assert status["leader_email"] == "aarav@test.com"
         assert status["leader_phone"] == "9876543210"
-        assert status["amount"] == 300
+        assert status["amount"] == 150
         assert status["status"] == "pending"
         assert len(status["members"]) == 2
 
@@ -118,7 +118,7 @@ def test_full_registration_suite():
         assert m2["section"] == "B"
         assert m2["email"] == "karthik@test.com"
         assert m2["phone"] == "9876543212"
-        print("[PASS] 4. Status reflects all details for Leader & Members + Amount Rs. 300")
+        print("[PASS] 4. Status reflects all details for Leader & Members + Amount Rs. 150")
 
         # 5. Submit Payment (UTR)
         pay_res = submit_payment(IshanyaPaymentRequest(

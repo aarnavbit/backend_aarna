@@ -60,7 +60,7 @@ def run_tests():
             "leader_sec": "A",
             "leader_email": "rohit.titans@example.com",
             "leader_phone": "+919876543210",
-            "amount": 300,
+            "amount": 150,
             "members": [
                 {
                     "name": "Virat Kohli",
@@ -103,13 +103,13 @@ def run_tests():
             and data.get("team_name") == "Tech Titans"
             and data.get("leader_name") == "Rohit Sharma"
             and data.get("leader_roll_no") == "23BD1A0501"
-            and data.get("amount") == 300
+            and data.get("amount") == 150
             and data.get("status") == "pending"
             and len(data.get("members", [])) == 2
             and data.get("members")[0].get("roll_no") == "23BD1A0502"
             and "whatsapp_link" not in data  # WhatsApp link must NOT show when pending
         ):
-            record_pass("Public status returns pending state, leader & member details, amount ₹300, no WhatsApp link")
+            record_pass("Public status returns pending state, leader & member details, amount Rs. 150, no WhatsApp link")
         else:
             record_fail("Status retrieval (pending)", f"Response: {data}")
 

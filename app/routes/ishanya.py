@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 import secrets
 import string
@@ -11,6 +11,7 @@ from app.schemas.ishanya import (
     IshanyaPaymentRequest,
     IshanyaMemberUpdateRequest,
     IshanyaAdminStatusRequest,
+    IshanyaAdminUpdateTeamRequest,
 )
 from app.services.auth import get_current_admin
 from app.services.email_service import send_status_email
@@ -44,7 +45,7 @@ def _team_to_dict(team: IshanyaTeam, members: list, include_whatsapp: bool = Fal
         "leader_sec": getattr(team, "leader_sec", "") or "",
         "leader_email": team.leader_email,
         "leader_phone": team.leader_phone,
-        "amount": getattr(team, "amount", 300) or 300,
+        "amount": getattr(team, "amount", 150) or 150,
         "utr_number": team.utr_number,
         "status": team.status,
         "admin_notes": team.admin_notes,
@@ -154,7 +155,7 @@ def submit_payment(req: IshanyaPaymentRequest, db: Session = Depends(get_db)):
 @router.get("/status/{registration_id}")
 def get_status(registration_id: str, db: Session = Depends(get_db)):
     team = db.query(IshanyaTeam).filter(IshanyaTeam.registration_id == registration_id).first()
-    if not team:
+    if not team or team.status == "deleted":
         raise HTTPException(status_code=404, detail="Team not found")
 
     members = db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).all()
@@ -208,19 +209,24 @@ def admin_list_teams(current_admin=Depends(get_current_admin), db: Session = Dep
     result = []
     for team in teams:
         members = db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).all()
-        result.append(_team_to_dict(team, members))
-    return {"teams": result, "count": len(result)}
+        result.append(_team_to_dict(team, members, include_whatsapp=True))
+    return {
+        "teams": result,
+        "count": len(result),
+        "whatsapp_group_link": settings.ISHANYA_WHATSAPP_GROUP_LINK,
+    }
 
 
 @router.put("/admin/teams/{registration_id}/status")
 def admin_update_status(
     registration_id: str,
     req: IshanyaAdminStatusRequest,
+    background_tasks: BackgroundTasks,
     current_admin=Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
-    if req.status not in ("accepted", "rejected"):
-        raise HTTPException(status_code=400, detail="Status must be 'accepted' or 'rejected'")
+    if req.status not in ("accepted", "rejected", "pending"):
+        raise HTTPException(status_code=400, detail="Status must be 'accepted', 'rejected', or 'pending'")
 
     team = db.query(IshanyaTeam).filter(IshanyaTeam.registration_id == registration_id).first()
     if not team:
@@ -232,19 +238,155 @@ def admin_update_status(
     team.updated_at = int(time.time() * 1000)
     db.commit()
 
-    # Send status email (fire-and-forget)
-    try:
-        send_status_email(
+    # Dispatch email asynchronously in background tasks ONLY IF ACCEPTED! (Do not send regret/rejection emails)
+    if req.status == "accepted":
+        background_tasks.add_task(
+            send_status_email,
             to=team.leader_email,
             team_name=team.team_name,
             registration_id=team.registration_id,
             status=req.status,
             whatsapp_link=settings.ISHANYA_WHATSAPP_GROUP_LINK,
         )
-    except Exception as e:
-        print(f"[ISHANYA] Email send failed: {e}")
 
-    return {"success": True, "message": f"Team {registration_id} has been {req.status}"}
+    return {
+        "success": True,
+        "message": f"Team {registration_id} has been {req.status}",
+        "team": _team_to_dict(team, db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).all(), include_whatsapp=True),
+    }
+
+
+@router.put("/admin/teams/{registration_id}")
+def admin_update_team(
+    registration_id: str,
+    req: IshanyaAdminUpdateTeamRequest,
+    current_admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    team = db.query(IshanyaTeam).filter(IshanyaTeam.registration_id == registration_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    if req.team_name is not None:
+        team.team_name = req.team_name.strip()
+    if req.leader_name is not None:
+        team.leader_name = req.leader_name.strip()
+    if req.leader_roll_no is not None:
+        team.leader_roll_no = req.leader_roll_no.strip()
+    if req.leader_dept is not None:
+        team.leader_dept = req.leader_dept.strip()
+    if req.leader_sec is not None:
+        team.leader_sec = req.leader_sec.strip()
+    if req.leader_email is not None:
+        team.leader_email = req.leader_email.strip()
+    if req.leader_phone is not None:
+        team.leader_phone = req.leader_phone.strip()
+    if req.amount is not None:
+        team.amount = req.amount
+    if req.utr_number is not None:
+        team.utr_number = req.utr_number.strip()
+    if req.status is not None:
+        team.status = req.status
+    if req.admin_notes is not None:
+        team.admin_notes = req.admin_notes
+
+    # Update members if provided
+    if req.members is not None:
+        db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).delete()
+        for m in req.members:
+            if m.name.strip():
+                new_m = IshanyaMember(
+                    team_id=team.id,
+                    name=m.name.strip(),
+                    roll_no=(m.roll_no or "").strip(),
+                    department=(m.department or "").strip(),
+                    section=(m.section or m.sec or "").strip(),
+                    email=(m.email or "").strip(),
+                    phone=(m.phone or "").strip(),
+                    created_at=int(time.time() * 1000),
+                )
+                db.add(new_m)
+
+    team.updated_at = int(time.time() * 1000)
+    db.commit()
+
+    members = db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).all()
+    return {
+        "success": True,
+        "message": f"Team {registration_id} updated successfully",
+        "team": _team_to_dict(team, members, include_whatsapp=True),
+    }
+
+
+@router.delete("/admin/teams/trash/purge")
+def admin_purge_trash(
+    current_admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    deleted_teams = db.query(IshanyaTeam).filter(IshanyaTeam.status == "deleted").all()
+    count = len(deleted_teams)
+    for t in deleted_teams:
+        db.query(IshanyaMember).filter(IshanyaMember.team_id == t.id).delete()
+        db.query(IshanyaTeam).filter(IshanyaTeam.id == t.id).delete()
+    db.commit()
+
+    return {"success": True, "message": f"Permanently removed {count} team(s) from trash", "purged_count": count}
+
+
+@router.delete("/admin/teams/{registration_id}")
+def admin_soft_delete_team(
+    registration_id: str,
+    current_admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    team = db.query(IshanyaTeam).filter(IshanyaTeam.registration_id == registration_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team.status = "deleted"
+    team.updated_at = int(time.time() * 1000)
+    db.commit()
+
+    return {"success": True, "message": f"Team {registration_id} moved to trash"}
+
+
+@router.post("/admin/teams/{registration_id}/restore")
+def admin_restore_team(
+    registration_id: str,
+    current_admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    team = db.query(IshanyaTeam).filter(IshanyaTeam.registration_id == registration_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    team.status = "pending"
+    team.updated_at = int(time.time() * 1000)
+    db.commit()
+
+    members = db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).all()
+    return {
+        "success": True,
+        "message": f"Team {registration_id} restored to pending",
+        "team": _team_to_dict(team, members, include_whatsapp=True),
+    }
+
+
+@router.delete("/admin/teams/{registration_id}/permanent")
+def admin_permanent_delete_team(
+    registration_id: str,
+    current_admin=Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    team = db.query(IshanyaTeam).filter(IshanyaTeam.registration_id == registration_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    db.query(IshanyaMember).filter(IshanyaMember.team_id == team.id).delete()
+    db.query(IshanyaTeam).filter(IshanyaTeam.id == team.id).delete()
+    db.commit()
+
+    return {"success": True, "message": f"Team {registration_id} permanently removed from database"}
 
 
 @router.get("/admin/teams/{registration_id}/screenshot")
@@ -257,3 +399,15 @@ def admin_get_screenshot(
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     return {"screenshot": team.payment_screenshot}
+
+
+@router.post("/admin/init-db")
+def admin_init_db(
+    current_admin=Depends(get_current_admin),
+):
+    try:
+        from app.database import engine, Base
+        Base.metadata.create_all(bind=engine)
+        return {"success": True, "message": "Database tables verified/created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database initialization failed: {str(e)}")

@@ -15,7 +15,7 @@ class IshanyaTeam(Base):
     leader_sec = Column(String(20), nullable=True)
     leader_email = Column(String(150), nullable=False)
     leader_phone = Column(String(20), nullable=False)
-    amount = Column(Integer, default=300, nullable=False)
+    amount = Column(Integer, default=150, nullable=False)
     utr_number = Column(String(100), nullable=True)
     payment_screenshot = Column(Text, nullable=True)
     status = Column(String(20), nullable=False, default='pending')  # 'pending' | 'accepted' | 'rejected'

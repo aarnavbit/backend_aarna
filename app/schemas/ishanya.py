@@ -7,8 +7,9 @@ class IshanyaMemberSchema(BaseModel):
     roll_no: Optional[str] = ""
     department: Optional[str] = ""
     sec: Optional[str] = ""
+    section: Optional[str] = ""
     email: Optional[str] = ""
-    phone: str
+    phone: Optional[str] = ""
 
 
 class IshanyaRegisterRequest(BaseModel):
@@ -19,7 +20,7 @@ class IshanyaRegisterRequest(BaseModel):
     leader_sec: Optional[str] = ""
     leader_email: str
     leader_phone: str
-    amount: Optional[int] = 300
+    amount: Optional[int] = 150
     members: List[IshanyaMemberSchema]
 
 
@@ -36,3 +37,18 @@ class IshanyaMemberUpdateRequest(BaseModel):
 class IshanyaAdminStatusRequest(BaseModel):
     status: str
     notes: Optional[str] = None
+
+
+class IshanyaAdminUpdateTeamRequest(BaseModel):
+    team_name: Optional[str] = None
+    leader_name: Optional[str] = None
+    leader_roll_no: Optional[str] = None
+    leader_dept: Optional[str] = None
+    leader_sec: Optional[str] = None
+    leader_email: Optional[str] = None
+    leader_phone: Optional[str] = None
+    amount: Optional[int] = None
+    utr_number: Optional[str] = None
+    status: Optional[str] = None
+    admin_notes: Optional[str] = None
+    members: Optional[List[IshanyaMemberSchema]] = None
