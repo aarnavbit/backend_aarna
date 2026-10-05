@@ -1,7 +1,9 @@
 import smtplib
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import resend
+try:
+    import resend
+except ImportError:
+    resend = None
 from app.config import settings
 
 
@@ -12,9 +14,18 @@ class EmailAdapter:
 
 class ResendAdapter(EmailAdapter):
     def send(self, to: str, subject: str, html_body: str):
+        global resend
         if not settings.RESEND_API_KEY:
             print(f"[EMAIL] Resend API key not configured, skipping email to {to}: {subject}")
             return None
+
+        if resend is None:
+            try:
+                import resend as _resend
+                resend = _resend
+            except ImportError:
+                print(f"[EMAIL] resend package is not installed; skipping email to {to}: {subject}")
+                return None
 
         from_email = settings.RESEND_FROM_EMAIL or "onboarding@resend.dev"
         try:
