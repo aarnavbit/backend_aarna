@@ -76,7 +76,8 @@ def _team_to_dict(team: IshanyaTeam, members: list, include_whatsapp: bool = Fal
 
 @router.post("/register")
 def register_team(req: IshanyaRegisterRequest, db: Session = Depends(get_db)):
-    if not req.team_name.strip():
+    clean_team_name = req.team_name.strip()
+    if not clean_team_name:
         raise HTTPException(status_code=400, detail="Team name is required")
     if not req.leader_name.strip() or not req.leader_email.strip() or not req.leader_phone.strip():
         raise HTTPException(status_code=400, detail="Leader name, email, and phone are required")
@@ -89,12 +90,23 @@ def register_team(req: IshanyaRegisterRequest, db: Session = Depends(get_db)):
         if not m.name.strip() or not m.phone.strip():
             raise HTTPException(status_code=400, detail=f"Member {i + 1}: name and phone are required")
 
+    # Check if team name already exists (case-insensitive check, exclude deleted)
+    existing_team = db.query(IshanyaTeam).filter(
+        IshanyaTeam.team_name.ilike(clean_team_name),
+        IshanyaTeam.status != "deleted"
+    ).first()
+    if existing_team:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Team name '{clean_team_name}' is already taken. Please choose another team name."
+        )
+
     reg_id = _generate_registration_id(db)
 
     try:
         team = IshanyaTeam(
             registration_id=reg_id,
-            team_name=req.team_name.strip(),
+            team_name=clean_team_name,
             leader_name=req.leader_name.strip(),
             leader_roll_no=(req.leader_roll_no or "").strip(),
             leader_dept=(req.leader_dept or "").strip(),
@@ -143,10 +155,23 @@ def submit_payment(req: IshanyaPaymentRequest, db: Session = Depends(get_db)):
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 
-    if not req.utr_number.strip():
+    clean_utr = req.utr_number.strip()
+    if not clean_utr:
         raise HTTPException(status_code=400, detail="UTR number is required")
 
-    team.utr_number = req.utr_number.strip()
+    # Check if UTR number has already been used by another team
+    duplicate_utr = db.query(IshanyaTeam).filter(
+        IshanyaTeam.utr_number.ilike(clean_utr),
+        IshanyaTeam.registration_id != req.registration_id,
+        IshanyaTeam.status != "deleted"
+    ).first()
+    if duplicate_utr:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"This UTR number has already been submitted by team '{duplicate_utr.team_name}'."
+        )
+
+    team.utr_number = clean_utr
     if req.screenshot_base64:
         team.payment_screenshot = req.screenshot_base64
     team.updated_at = int(time.time() * 1000)
@@ -273,7 +298,16 @@ def admin_update_team(
         raise HTTPException(status_code=404, detail="Team not found")
 
     if req.team_name is not None:
-        team.team_name = req.team_name.strip()
+        new_name = req.team_name.strip()
+        if new_name:
+            dup_team = db.query(IshanyaTeam).filter(
+                IshanyaTeam.team_name.ilike(new_name),
+                IshanyaTeam.registration_id != registration_id,
+                IshanyaTeam.status != "deleted"
+            ).first()
+            if dup_team:
+                raise HTTPException(status_code=400, detail=f"Team name '{new_name}' is already in use by another team.")
+            team.team_name = new_name
     if req.leader_name is not None:
         team.leader_name = req.leader_name.strip()
     if req.leader_roll_no is not None:
@@ -289,7 +323,16 @@ def admin_update_team(
     if req.amount is not None:
         team.amount = req.amount
     if req.utr_number is not None:
-        team.utr_number = req.utr_number.strip()
+        new_utr = req.utr_number.strip()
+        if new_utr:
+            dup_utr = db.query(IshanyaTeam).filter(
+                IshanyaTeam.utr_number.ilike(new_utr),
+                IshanyaTeam.registration_id != registration_id,
+                IshanyaTeam.status != "deleted"
+            ).first()
+            if dup_utr:
+                raise HTTPException(status_code=400, detail=f"UTR number '{new_utr}' is already assigned to team '{dup_utr.team_name}'.")
+        team.utr_number = new_utr or None
     if req.status is not None:
         team.status = req.status
     if req.admin_notes is not None:

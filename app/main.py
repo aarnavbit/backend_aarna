@@ -53,6 +53,24 @@ def _run_migrations():
         except Exception:
             conn.rollback()  # Column already exists
 
+        # 4. Ensure unique index on ishanya_team(team_name)
+        try:
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_ishanya_team_name ON ishanya_team (LOWER(team_name))"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
+        # 5. Ensure unique index on ishanya_team(utr_number) where utr_number is not null
+        try:
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_ishanya_team_utr ON ishanya_team (utr_number) WHERE utr_number IS NOT NULL AND utr_number != ''"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
 _run_migrations()
 
 # Auto-seed Super Admin if not present
