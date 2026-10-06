@@ -23,7 +23,7 @@ class Registration(Base):
     mobilenumber = Column(String(20), nullable=False)
     department = Column(String(100), nullable=False)
     section = Column(String(20), nullable=False)
-    year = Column(String(20), nullable=False)
+    year = Column(String(20), nullable=True)  # nullable so pre-existing rows are unaffected
     portfolio = Column(String(150), nullable=False)
     knowaboutaarna = Column(Text, nullable=False)
     whyjoinaarna = Column(Text, nullable=False)

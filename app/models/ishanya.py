@@ -13,6 +13,7 @@ class IshanyaTeam(Base):
     leader_roll_no = Column(String(50), nullable=True)
     leader_dept = Column(String(100), nullable=True)
     leader_sec = Column(String(20), nullable=True)
+    leader_year = Column(String(10), nullable=True)  # nullable: existing rows unaffected
     leader_email = Column(String(150), nullable=False)
     leader_phone = Column(String(20), nullable=False)
     amount = Column(Integer, default=150, nullable=False)
@@ -33,6 +34,7 @@ class IshanyaMember(Base):
     roll_no = Column(String(50), nullable=True)
     department = Column(String(100), nullable=True)
     section = Column(String(20), nullable=True)
+    year = Column(String(10), nullable=True)  # nullable: existing rows unaffected
     email = Column(String(150), nullable=True)
     phone = Column(String(20), nullable=False)
     created_at = Column(BigInteger, default=lambda: int(time.time() * 1000), nullable=False)

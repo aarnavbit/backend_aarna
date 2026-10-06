@@ -8,6 +8,7 @@ class IshanyaMemberSchema(BaseModel):
     department: Optional[str] = ""
     sec: Optional[str] = ""
     section: Optional[str] = ""
+    year: Optional[str] = ""
     email: Optional[str] = ""
     phone: Optional[str] = ""
 
@@ -18,6 +19,7 @@ class IshanyaRegisterRequest(BaseModel):
     leader_roll_no: Optional[str] = ""
     leader_dept: Optional[str] = ""
     leader_sec: Optional[str] = ""
+    leader_year: Optional[str] = ""
     leader_email: str
     leader_phone: str
     amount: Optional[int] = 150

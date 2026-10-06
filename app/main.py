@@ -2,12 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 import socketio
 import os
 
 from app.config import settings
 from app.database import engine, Base, SessionLocal
-import app.models # Ensure all models are registered
+import app.models  # Ensure all models are registered
 from app.routes.player import router as player_router
 from app.routes.admin import router as admin_router
 from app.routes.recruitment import router as recruitment_router
@@ -17,6 +18,42 @@ from app.socketio_app import sio
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# ---------------------------------------------------------------------------
+# Safe startup migrations — PostgreSQL
+# All three migrations are idempotent: safe to run on every restart.
+# New columns are nullable so existing rows are completely unaffected.
+# ---------------------------------------------------------------------------
+def _run_migrations():
+    with engine.connect() as conn:
+        # 1. Make registration.year nullable (existing rows already have values)
+        try:
+            conn.execute(text(
+                "ALTER TABLE registration ALTER COLUMN year DROP NOT NULL"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()  # Already nullable — no action needed
+
+        # 2. Add leader_year to ishanya_team (nullable, existing rows get NULL)
+        try:
+            conn.execute(text(
+                "ALTER TABLE ishanya_team ADD COLUMN IF NOT EXISTS leader_year VARCHAR(10)"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()  # Column already exists
+
+        # 3. Add year to ishanya_member (nullable, existing rows get NULL)
+        try:
+            conn.execute(text(
+                "ALTER TABLE ishanya_member ADD COLUMN IF NOT EXISTS year VARCHAR(10)"
+            ))
+            conn.commit()
+        except Exception:
+            conn.rollback()  # Column already exists
+
+_run_migrations()
 
 # Auto-seed Super Admin if not present
 with SessionLocal() as db_session:

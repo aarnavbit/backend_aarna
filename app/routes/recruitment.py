@@ -206,6 +206,13 @@ def register_applicant(req: ApplicationSubmissionSchema, db: Session = Depends(g
             detail="Full name, email address, and roll number are required."
         )
 
+    # Validate year: only 2nd, 3rd, or 4th year students are eligible
+    if year and year not in ('2', '3', '4'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Year must be 2, 3, or 4."
+        )
+
     try:
         new_registration = Registration(
             fullname=fullname,
